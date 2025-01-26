@@ -13,7 +13,7 @@ You need both to run this addon.
 
 ## Motivation
 
-Stem separation is resource-intensive. This allows a powerful server, ideally cuda-accelerated, to split the files while usdb_syncer is run on a light machine. Of course, it possible to just run the server on the same machine if you wish.
+Stem separation is resource-intensive. USSplitter allows a powerful server, ideally cuda-accelerated, to split the files while usdb_syncer is run on a light machine. Of course, it possible to just run the server on the same machine if you wish.
 
 Additionally, the approach is modular. For example, it would be very easy to write a script that runs through an entire song library, splitting everything. USSplitter provides a simple interface, manages resources, and can be expanded at will. 
 
