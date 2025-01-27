@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=.python-version,target=.python-version \
-    uv sync --frozen --no-install-project --link-mode=copy --group=torch --no-dev
+    uv sync --frozen --no-install-project --link-mode=copy --only-group torch
 
 # Copy all files
 ADD src/ussplitter ./ussplitter
@@ -38,10 +38,10 @@ ADD pyproject.toml .
 ADD uv.lock .
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --group=torch --no-dev
+    uv sync --frozen --only-group torch
 
 EXPOSE 5000
 
 # Run the application
 # DO NOT TOUCH THE WORKERS. CODE IS NOT THREAD SAFE
-CMD ["uv", "run", "gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "ussplitter.server:app"]
+CMD ["uv", "run", "--no-dev", "--group", "torch", "gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "ussplitter.server:app"]
