@@ -6,7 +6,7 @@ import shutil
 import sys
 import uuid
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto, unique
 from pathlib import Path
 from queue import Queue
 from threading import Lock
@@ -30,22 +30,22 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-to_separate = Queue()
+to_separate: Queue[str] = Queue()
 
 status_lock = Lock()
-pending_separations = []
-processing_separations = []
-finished_separations = []
-errored_separations = []
+pending_separations: list[str] = []
+processing_separations: list[str] = []
+finished_separations: list[str] = []
+errored_separations: list[str] = []
 
 
-@dataclass(frozen=True)
+@unique
 class SplitStatus(Enum):
-    NONE = 0
-    PENDING = 1
-    PROCESSING = 2
-    FINISHED = 3
-    ERROR = 4
+    NONE = auto()
+    PENDING = auto()
+    PROCESSING = auto()
+    FINISHED = auto()
+    ERROR = auto()
 
 
 @dataclass(frozen=True)
@@ -62,11 +62,11 @@ class AudioSplitError(Exception):
         self.error_code = error_code
         super().__init__(self.message)
 
-    def __str__(self) -> tuple[int, str]:
-        """
-        :return: A tuple containing the error code and the error message
-        """
-        return self.error_code, self.message
+    def __str__(self):
+        return self.message
+
+    def ec(self):
+        return self.error_code
 
 
 class ArgsError(AudioSplitError):
@@ -252,5 +252,5 @@ def separate_audio(args: SplitArgs) -> None:
         # Temporarily disable tqdm progress bars
         stack.enter_context(contextlib.suppress(Exception))
         if "tqdm" in sys.modules:
-            sys.modules["tqdm"].tqdm = lambda *args, **kwargs: args[0] if args else None
+            sys.modules["tqdm"].tqdm = lambda *args, **kwargs: args[0] if args else None  # type: ignore
         demucs.separate.main(demucs_args)

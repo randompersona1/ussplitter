@@ -16,7 +16,6 @@ The server is expected to have the following endpoints:
 - POST /cleanupall: Cleans up all files on the server.
 """
 
-import logging
 import time
 from pathlib import Path
 from urllib.parse import urljoin
@@ -27,19 +26,13 @@ import usdb_syncer.logger as usdb_logger
 from usdb_syncer import hooks, usdb_song
 
 # This is somewhat hacky, but usdb_syncer doesn't expose a config directory
-CONFIG_DIR = Path(appdirs.user_data_dir("usdb_syncer", "bohning")).joinpath(
-    "addon_config"
-)
-CONFIGS = {}
+CONFIG_DIR = Path(
+    appdirs.user_data_dir(appname="usdb_syncer", appauthor="bohning", roaming=False)
+).joinpath("addon_config")
+CONFIGS: dict[str, str] = {}
 NECCESARY_CONFIG_KEYS = ["SERVER_URI"]
 
-
-logging.basicConfig(
-    format="%(asctime)s,%(msecs)03d %(name)s %(levelname)s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.DEBUG,
-)
-logger = logging.getLogger(__name__)
+logger = usdb_logger.logger
 
 
 def initialize_addon() -> None:
@@ -72,7 +65,9 @@ def initialize_addon() -> None:
             logger.error(f"{key} not found in config file. Please add it.")
             return
     assert CONFIGS["SERVER_URI"] is not None, "SERVER_URI is required in config file."
-    assert CONFIGS["SERVER_URI"].startswith("http"), "SERVER_URI must start with http."
+    assert CONFIGS["SERVER_URI"].startswith("http://"), (
+        "SERVER_URI must start with http://."
+    )
 
     hooks.SongLoaderDidFinish.subscribe(on_download_finished)
     logger.debug("Subscribed to SongLoaderDidFinish event.")
@@ -115,6 +110,16 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     # Create a custom logger for the song to match usdb_syncer's logging format
     # {date} {time} {level} {song_id} {message}
     song_logger = usdb_logger.song_logger(song.song_id)
+
+    if not song.sync_meta:
+        song_logger.error("Missing sync_meta. This should never happen.")
+        return
+    if not song.sync_meta.txt:
+        song_logger.error("Missing txt file. Skipping splitting.")
+        return
+    if not song.sync_meta.audio:
+        song_logger.error("Missing audio file. Skipping splitting.")
+        return
 
     song_logger.info("Preparing split.")
 

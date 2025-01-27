@@ -25,6 +25,7 @@ torchaudio = [
 ]
 demucs = { git = "https://github.com/adefossez/demucs", rev = "b9ab48cad45976ba42b2ff17b229c071f0df9390" }
 usdb-syncer = { git = "https://github.com/randompersona1/usdb_syncer", branch = "python3.11" }
+# This branch, that I intend to maintain, changes the required python version for usdb_syncer to ^3.11. This allows usdb_syncer to be added as a dependency, removing errors and enabling type hints for the addon system.
 
 [[tool.uv.index]]
 name = "pytorch-cu121"
@@ -36,8 +37,26 @@ dev = [
     "usdb-syncer",
     "isort>=5.13.2",
     "ruff>=0.9.3",
+    "mypy>=1.14.1",
+    "pip>=25.0",
+    "types-requests>=2.32.0.20241016",
+    "types-pyyaml>=6.0.12.20241230",
+    "types-setuptools>=75.8.0.20250110",
+    "types-tabulate>=0.9.0.20241207",
+    "types-tqdm>=4.67.0.20241221",
+    "types-colorama>=0.4.15.20240311",
+    "black>=24.10.0",
 ]
 torch = [
     "torch>=2.1.2",
     "torchaudio<2.2.0",
 ]
+
+[tool.mypy]
+mypy_path = "src"
+explicit_package_bases = true
+namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = ["appdirs.*", "usdb_syncer.*"]
+follow_untyped_imports = true

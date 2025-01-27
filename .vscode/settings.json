@@ -1,5 +1,13 @@
 {
-    "licenser.author": "randompersona1",
-    "licenser.license": "LGPLv3",
-    "licenser.projectName": "USSplitter"
+    "python.linting.mypyEnabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true,
+        "source.fixAll": true
+    },
+    "editor.rulers": [
+        88
+    ]
 }

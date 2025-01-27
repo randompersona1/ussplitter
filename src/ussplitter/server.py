@@ -2,7 +2,7 @@ import threading
 
 import flask
 
-from ussplitter import backend
+import ussplitter.backend as backend
 
 app = flask.Flask(__name__)
 
@@ -25,7 +25,10 @@ def split():
 
 @app.route("/result/vocals", methods=["GET"])
 def get_vocals():
-    uuid = flask.request.args.get("uuid")
+    uuid = flask.request.args.get(key="uuid", type=str)
+    if not uuid:
+        return "No uuid provided", 400
+
     vocals_path = backend.get_vocals(uuid)
     return flask.send_file(vocals_path)
 
@@ -33,6 +36,9 @@ def get_vocals():
 @app.route("/result/instrumental", methods=["GET"])
 def get_instrumental():
     uuid = flask.request.args.get("uuid")
+    if not uuid:
+        return "No uuid provided", 400
+
     instrumental_path = backend.get_instrumental(uuid)
     return flask.send_file(instrumental_path)
 
@@ -40,18 +46,20 @@ def get_instrumental():
 @app.route("/status", methods=["GET"])
 def get_status():
     uuid = flask.request.args.get("uuid")
+    if not uuid:
+        return "No uuid provided", 400
 
     status = backend.get_status(uuid)
-
     return status.name, 200
 
 
 @app.route("/cleanup", methods=["POST"])
 def cleanup():
     uuid = flask.request.args.get("uuid")
+    if not uuid:
+        return "No uuid provided", 400
 
     success = backend.cleanup(uuid)
-
     if success:
         return "Success", 200
     else:
