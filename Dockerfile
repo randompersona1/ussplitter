@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-base-ubuntu20.04
+FROM nvidia/cuda:12.1.0-base-ubuntu22.04
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Download and install model
@@ -11,13 +11,6 @@ ENV TORCH_HOME=/app/models
 # Set working directory
 WORKDIR /app
 
-# Copy all files
-ADD src/ussplitter ./ussplitter
-ADD .python-version .
-ADD pyproject.toml .
-ADD uv.lock .
-
-
 # We set the timezone because ffmpegs dependancy `tzdata` will otherwise prompt us to set it interactively
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
@@ -26,8 +19,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git \
-        ffmpeg && \
+    git \
+    ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -35,13 +28,20 @@ RUN apt-get update && \
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --link-mode=copy
+    --mount=type=bind,source=.python-version,target=.python-version \
+    uv sync --frozen --no-install-project --link-mode=copy --only-group torch
+
+# Copy all files
+ADD src/ussplitter ./ussplitter
+ADD .python-version .
+ADD pyproject.toml .
+ADD uv.lock .
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+    uv sync --frozen --only-group torch
 
 EXPOSE 5000
 
 # Run the application
 # DO NOT TOUCH THE WORKERS. CODE IS NOT THREAD SAFE
-CMD ["uv", "run", "gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "ussplitter.server:app"]
+CMD ["uv", "run", "--no-dev", "--group", "torch", "gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "ussplitter.server:app"]

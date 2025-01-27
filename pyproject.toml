@@ -11,8 +11,6 @@ dependencies = [
     "gunicorn>=23.0.0",
     "numpy~=1.24.1",
     "platformdirs>=4.3.6",
-    "torch>=2.1.2",
-    "torchaudio<2.2.0",
 ]
 
 [tool.uv.sources]
@@ -26,8 +24,20 @@ torchaudio = [
   { index = "pytorch-cu121", marker = "platform_system != 'Darwin'"},
 ]
 demucs = { git = "https://github.com/adefossez/demucs", rev = "b9ab48cad45976ba42b2ff17b229c071f0df9390" }
+usdb-syncer = { git = "https://github.com/randompersona1/usdb_syncer", branch = "python3.11" }
 
 [[tool.uv.index]]
 name = "pytorch-cu121"
 url = "https://download.pytorch.org/whl/cu121"
 explicit = true
+
+[dependency-groups]
+dev = [
+    "usdb-syncer",
+    "isort>=5.13.2",
+    "ruff>=0.9.3",
+]
+torch = [
+    "torch>=2.1.2",
+    "torchaudio<2.2.0",
+]
