@@ -32,7 +32,7 @@ Additionally, the approach is modular. For example, it would be very easy to wri
 > You should be somewhat technically inclined to use this. There are almost certainly bugs. Please make sure you backup your songs.
 
 > [!WARNING] 
-> This project is in its very early stages. Best results are achieved with a nvidia graphics card, although it *should* fallback to cpu. Note that the docker image is currently enormous (~8GB). This may or may not change.
+> You should have a somewhat modern nvidia graphics card. Splitting will fall back to cpu if that's not available, but will take unreasonable amounts of time. Note that the docker image is currently enormous (~8GB). This may or may not change.
 
 > [!WARNING]
 > Stem separation uses quite a lot of ram. I don't recommend using this with less than 16GB of system memory. Future updates will allow using smaller models, allowing for a smaller memory footprint.
@@ -73,8 +73,19 @@ Create the `addon_config` directory and a `ussplitter.txt` inside it. The only c
 
 ## Manual usage
 
-If you don't want to use docker, you will need `uv` to manage the project. Currently, `gunicorn` is used, which does not work on windows. Replace it with a different wsgi server like waitress. For gunicorn, the run command is:
+If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/) to manage the project. Then, install the dependancies with `uv sync --no-dev`.
+
+Currently, `gunicorn` is used, which does not work on windows. Replace it with a different wsgi server like waitress. For gunicorn, the run command is:
 
 `uv run gunicorn -b 0.0.0.0:5000 -w 1 ussplitter.server:app`
 
 Do not use more than one worker. Instead of a database, pure python is used, meaning workers cannot share data.
+
+
+## Development
+
+You need [`uv`](https://docs.astral.sh/uv/).
+
+Run `uv sync` to install dependancies. If for some reason you want to install torch, add `--group=torch`.
+
+Once the dependancies have been installed, use `ruff check` and `ruff format --diff` to lint. You should also use `isort --diff` to check your imports.

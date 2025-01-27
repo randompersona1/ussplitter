@@ -11,9 +11,10 @@ dependencies = [
     "gunicorn>=23.0.0",
     "numpy~=1.24.1",
     "platformdirs>=4.3.6",
-    "torch>=2.1.2",
-    "torchaudio<2.2.0",
 ]
+
+[tool.uv]
+default-groups = ["dev"]
 
 [tool.uv.sources]
 torch = [
@@ -36,4 +37,10 @@ explicit = true
 [dependency-groups]
 dev = [
     "usdb-syncer",
+    "isort>=5.13.2",
+    "ruff>=0.9.3",
+]
+torch = [
+    "torch>=2.1.2",
+    "torchaudio<2.2.0",
 ]

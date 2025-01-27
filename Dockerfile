@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=.python-version,target=.python-version \
-    uv sync --frozen --no-install-project --link-mode=copy
+    uv sync --frozen --no-install-project --link-mode=copy --group=torch --no-dev
 
 # Copy all files
 ADD src/ussplitter ./ussplitter
@@ -38,7 +38,7 @@ ADD pyproject.toml .
 ADD uv.lock .
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+    uv sync --frozen --group=torch --no-dev
 
 EXPOSE 5000
 

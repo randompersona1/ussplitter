@@ -2,11 +2,11 @@ version = 1
 requires-python = ">=3.11, <4"
 resolution-markers = [
     "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
     "(python_full_version >= '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux'",
     "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
     "(python_full_version < '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux'",
     "python_full_version >= '3.12' and sys_platform == 'darwin'",
@@ -51,7 +51,7 @@ name = "beautifulsoup4"
 version = "4.12.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "soupsieve" },
+    { name = "soupsieve", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b3/ca/824b1195773ce6166d388573fc106ce56d4a805bd7427b624e063596ec58/beautifulsoup4-4.12.3.tar.gz", hash = "sha256:74e3d1928edc070d21748185c46e3fb33490f22f52a3addee9aee0f4f7781051", size = 581181 }
 wheels = [
@@ -126,7 +126,7 @@ name = "brotlicffi"
 version = "1.1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi" },
+    { name = "cffi", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or (implementation_name != 'cpython' and sys_platform != 'linux') or (platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/95/9d/70caa61192f570fcf0352766331b735afa931b4c6bc9a348a0925cc13288/brotlicffi-1.1.0.0.tar.gz", hash = "sha256:b77827a689905143f87915310b93b273ab17888fd43ef350d4832c4a71083c13", size = 465192 }
 wheels = [
@@ -152,7 +152,7 @@ name = "cffi"
 version = "1.17.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser" },
+    { name = "pycparser", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/97/c783634659c2920c3fc70419e3af40972dbaf758daa229a7d6ea6135c90d/cffi-1.17.1.tar.gz", hash = "sha256:1c39c6016c32bc48dd54561950ebd6836e1670f2ae46128f67cf49e789c52824", size = 516621 }
 wheels = [
@@ -287,7 +287,7 @@ name = "cryptography"
 version = "44.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' and sys_platform != 'darwin'" },
+    { name = "cffi", marker = "(implementation_name != 'cpython' and os_name == 'nt' and platform_python_implementation != 'PyPy' and sys_platform == 'linux') or (implementation_name != 'cpython' and platform_python_implementation != 'PyPy' and sys_platform != 'darwin' and sys_platform != 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and platform_python_implementation != 'PyPy' and sys_platform == 'linux') or (os_name != 'nt' and platform_python_implementation != 'PyPy' and sys_platform != 'darwin')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/91/4c/45dfa6829acffa344e3967d6006ee4ae8be57af746ae2eba1c431949b32c/cryptography-44.0.0.tar.gz", hash = "sha256:cd4e834f340b4293430701e772ec543b0fbe6c2dea510a5286fe0acabe153a02", size = 710657 }
 wheels = [
@@ -312,11 +312,11 @@ name = "curl-cffi"
 version = "0.5.10"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
+    "python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
-    { name = "cffi", marker = "(implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "cffi", marker = "implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/57/43d0e4475c336282deb7acf5285c35fbdce6a041d1583dbe30e0d761117d/curl_cffi-0.5.10.tar.gz", hash = "sha256:55bac4b73e2d80ceeaabea33270fc8ca6ace594128a46710242f2e688b4f8bfc", size = 35231 }
 wheels = [
@@ -361,18 +361,18 @@ name = "demucs"
 version = "4.1.0a3"
 source = { git = "https://github.com/adefossez/demucs?rev=b9ab48cad45976ba42b2ff17b229c071f0df9390#b9ab48cad45976ba42b2ff17b229c071f0df9390" }
 dependencies = [
-    { name = "dora-search" },
-    { name = "einops" },
-    { name = "julius" },
-    { name = "lameenc" },
-    { name = "openunmix" },
-    { name = "pyyaml" },
+    { name = "dora-search", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "einops", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "julius", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "lameenc", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "openunmix", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pyyaml", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform != 'darwin'" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
     { name = "torchaudio", version = "2.1.2", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
     { name = "torchaudio", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torchaudio", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "tqdm" },
+    { name = "torchaudio", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "tqdm", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 
 [[package]]
@@ -380,12 +380,12 @@ name = "dora-search"
 version = "0.1.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "omegaconf" },
-    { name = "retrying" },
-    { name = "submitit" },
+    { name = "omegaconf", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "retrying", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "submitit", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform != 'darwin'" },
-    { name = "treetable" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "treetable", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d5/9d/9a13947db237375486c0690f4741dd2b7e1eee20e0ffcb55dbd1b21cc600/dora_search-0.1.12.tar.gz", hash = "sha256:2956fd2c4c7e4b9a4830e83f0d4cf961be45cfba1a2f0570281e91d15ac516fb", size = 87111 }
 
@@ -394,7 +394,7 @@ name = "dunamai"
 version = "1.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "packaging" },
+    { name = "packaging", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/06/4e/a5c8c337a1d9ac0384298ade02d322741fb5998041a5ea74d1cd2a4a1d47/dunamai-1.23.0.tar.gz", hash = "sha256:a163746de7ea5acb6dacdab3a6ad621ebc612ed1e528aaa8beedb8887fccd2c4", size = 44681 }
 wheels = [
@@ -416,9 +416,9 @@ version = "1.31.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "colorlog" },
-    { name = "ffmpeg-progress-yield" },
-    { name = "tqdm" },
+    { name = "colorlog", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "ffmpeg-progress-yield", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "tqdm", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f6/7f/ba9076fd5b1090631a6d8ee7e701ef5f480646c933bcfe045c64b7c21162/ffmpeg_normalize-1.31.0.tar.gz", hash = "sha256:7d1b1ddc0cf2febe558663b613ceb365b27fbe89f41be35d39894b6267041539", size = 1991748 }
 wheels = [
@@ -457,11 +457,11 @@ name = "flask"
 version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "blinker" },
-    { name = "click" },
-    { name = "itsdangerous" },
-    { name = "jinja2" },
-    { name = "werkzeug" },
+    { name = "blinker", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "click", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "itsdangerous", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "jinja2", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "werkzeug", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/89/50/dff6380f1c7f84135484e176e0cac8690af72fa90e932ad2a0a60e28c69b/flask-3.1.0.tar.gz", hash = "sha256:5f873c5184c897c8d9d1b05df1e3d01b14910ce69607a117bd3277098a5836ac", size = 680824 }
 wheels = [
@@ -482,7 +482,7 @@ name = "gunicorn"
 version = "23.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "packaging" },
+    { name = "packaging", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031 }
 wheels = [
@@ -503,11 +503,20 @@ name = "importlib-metadata"
 version = "8.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/08/c1395a292bb23fd03bdf572a1357c5a733d3eecbab877641ceacab23db6e/importlib_metadata-8.6.1.tar.gz", hash = "sha256:310b41d755445d74569f993ccfc22838295d9fe005425094fad953d7f15c8580", size = 55767 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/79/9d/0fb148dc4d6fa4a7dd1d8378168d9b4cd8d4560a6fbf6f0121c5fc34eb68/importlib_metadata-8.6.1-py3-none-any.whl", hash = "sha256:02a89390c1e15fdfdc0d7c6b25cb3e62650d0494005c97d6f148bf5b9787525e", size = 26971 },
+]
+
+[[package]]
+name = "isort"
+version = "5.13.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/f9/c1eb8635a24e87ade2efce21e3ce8cd6b8630bb685ddc9cdaca1349b2eb5/isort-5.13.2.tar.gz", hash = "sha256:48fdfcb9face5d58a4f6dde2e72a1fb8dcaf8ab26f95ab49fab84c2ddefb0109", size = 175303 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/b3/8def84f539e7d2289a02f0524b944b15d7c75dab7628bedf1c4f0992029c/isort-5.13.2-py3-none-any.whl", hash = "sha256:8ca5e72a8d85860d5a3fa69b8745237f2939afe12dbf656afbcb47fe72d947a6", size = 92310 },
 ]
 
 [[package]]
@@ -524,7 +533,7 @@ name = "jaraco-classes"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "more-itertools" },
+    { name = "more-itertools", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/06/c0/ed4a27bc5571b99e3cff68f8a9fa5b56ff7df1c2251cc715a652ddd26402/jaraco.classes-3.4.0.tar.gz", hash = "sha256:47a024b51d0239c0dd8c8540c6c7f484be3b8fcf0b2d85c13825780d3b3f3acd", size = 11780 }
 wheels = [
@@ -536,7 +545,7 @@ name = "jaraco-context"
 version = "6.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "backports-tarfile", marker = "python_full_version < '3.12'" },
+    { name = "backports-tarfile", marker = "(python_full_version < '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64') or (python_full_version < '3.12' and os_name != 'nt') or (python_full_version < '3.12' and platform_machine == 'aarch64') or (python_full_version < '3.12' and sys_platform != 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/df/ad/f3777b81bf0b6e7bc7514a1656d3e637b2e8e15fab2ce3235730b3e7a4e6/jaraco_context-6.0.1.tar.gz", hash = "sha256:9bae4ea555cf0b14938dc0aee7c9f32ed303aa20a3b73e7dc80111628792d1b3", size = 13912 }
 wheels = [
@@ -548,7 +557,7 @@ name = "jaraco-functools"
 version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "more-itertools" },
+    { name = "more-itertools", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ab/23/9894b3df5d0a6eb44611c36aec777823fc2e07740dabbd0b810e19594013/jaraco_functools-4.1.0.tar.gz", hash = "sha256:70f7e0e2ae076498e212562325e805204fc092d7b4c17e0e86c959e249701a9d", size = 19159 }
 wheels = [
@@ -569,7 +578,7 @@ name = "jinja2"
 version = "3.1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markupsafe" },
+    { name = "markupsafe", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/af/92/b3130cbbf5591acf9ade8708c365f3238046ac7cb8ccba6e81abccb0ccff/jinja2-3.1.5.tar.gz", hash = "sha256:8fefff8dc3034e27bb80d67c671eb8a9bc424c0ef4c0826edbff304cceff43bb", size = 244674 }
 wheels = [
@@ -582,7 +591,7 @@ version = "0.2.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform != 'darwin'" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a1/19/c9e1596b5572c786b93428d0904280e964c930fae7e6c9368ed9e1b63922/julius-0.2.7.tar.gz", hash = "sha256:3c0f5f5306d7d6016fcc95196b274cae6f07e2c9596eed314e4e7641554fbb08", size = 59640 }
 
@@ -591,10 +600,10 @@ name = "keyring"
 version = "25.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "importlib-metadata", marker = "python_full_version < '3.12'" },
-    { name = "jaraco-classes" },
-    { name = "jaraco-context" },
-    { name = "jaraco-functools" },
+    { name = "importlib-metadata", marker = "(python_full_version < '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64') or (python_full_version < '3.12' and os_name != 'nt') or (python_full_version < '3.12' and platform_machine == 'aarch64') or (python_full_version < '3.12' and sys_platform != 'linux')" },
+    { name = "jaraco-classes", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "jaraco-context", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "jaraco-functools", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "jeepney", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform == 'linux') or (platform_machine == 'aarch64' and sys_platform == 'linux')" },
     { name = "pywin32-ctypes", marker = "sys_platform == 'win32'" },
     { name = "secretstorage", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform == 'linux') or (platform_machine == 'aarch64' and sys_platform == 'linux')" },
@@ -796,8 +805,8 @@ name = "omegaconf"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "antlr4-python3-runtime" },
-    { name = "pyyaml" },
+    { name = "antlr4-python3-runtime", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pyyaml", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/09/48/6388f1bb9da707110532cb70ec4d2822858ddfb44f1cdf1233c20a80ea4b/omegaconf-2.3.0.tar.gz", hash = "sha256:d5d4b6d29955cc50ad50c46dc269bcd92c6e00f5f90d23ab5fee7bfca4ba4cc7", size = 3298120 }
 wheels = [
@@ -809,13 +818,13 @@ name = "openunmix"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
+    { name = "numpy", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform != 'darwin'" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
     { name = "torchaudio", version = "2.1.2", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
     { name = "torchaudio", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torchaudio", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "tqdm" },
+    { name = "torchaudio", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "tqdm", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/ef/4ad54e3ecb1e89f7f7bdb4c7b751e43754e892d3c32a8550e5d0882565df/openunmix-1.3.0.tar.gz", hash = "sha256:cc9245ce728700f5d0b72c67f01be4162777e617cdc47f9b035963afac180fc8", size = 45889 }
 wheels = [
@@ -903,9 +912,9 @@ name = "poetry-dynamic-versioning"
 version = "1.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "dunamai" },
-    { name = "jinja2" },
-    { name = "tomlkit" },
+    { name = "dunamai", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "jinja2", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "tomlkit", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/63/55/e4febcf6e6b9073e7bd29bf558735ea208272f56a2a1e026d29ebe06231e/poetry_dynamic_versioning-1.7.1.tar.gz", hash = "sha256:7304b8459af7b7114cd83429827c4d3d8b7d29df4129dde8dff61c76f93faaa3", size = 35071 }
 wheels = [
@@ -946,9 +955,9 @@ name = "pyside6"
 version = "6.8.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyside6-addons" },
-    { name = "pyside6-essentials" },
-    { name = "shiboken6" },
+    { name = "pyside6-addons", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pyside6-essentials", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "shiboken6", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/8c/2529634d9c6284db1fe7ea12688d5a43ce7abaaba5f5b45c23b2634b1fde/PySide6-6.8.0.2-cp39-abi3-macosx_12_0_universal2.whl", hash = "sha256:cecc6ce1da6cb04542ff5a0887734f63e6ecf54258d1786285b9c7904abd9b01", size = 554051 },
@@ -962,8 +971,8 @@ name = "pyside6-addons"
 version = "6.8.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyside6-essentials" },
-    { name = "shiboken6" },
+    { name = "pyside6-essentials", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "shiboken6", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/a3/f44f6ad700a8534cbbb9f72a1cd203417890424ad59920bab76111fc524d/PySide6_Addons-6.8.0.2-cp39-abi3-macosx_12_0_universal2.whl", hash = "sha256:30c9ca570dd18ffbfd34ee95e0a319c34313a80425c4011d6ccc9f4cca0dc4c8", size = 302011435 },
@@ -977,7 +986,7 @@ name = "pyside6-essentials"
 version = "6.8.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "shiboken6" },
+    { name = "shiboken6", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/57/3210660aff9436429cb2709ed7bdf1808b075f8f6ed47853160e56903621/PySide6_Essentials-6.8.0.2-cp39-abi3-macosx_12_0_universal2.whl", hash = "sha256:3df4ed75bbb74d74ac338b330819b1a272e7f5cec206765c7176a197c8bc9c79", size = 164669671 },
@@ -1035,10 +1044,10 @@ name = "requests"
 version = "2.32.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "certifi" },
-    { name = "charset-normalizer" },
-    { name = "idna" },
-    { name = "urllib3" },
+    { name = "certifi", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "charset-normalizer", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "idna", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "urllib3", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/63/70/2bf7780ad2d390a8d301ad0b550f1581eadbd9a20f896afe06353c2a2913/requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760", size = 131218 }
 wheels = [
@@ -1050,7 +1059,7 @@ name = "retrying"
 version = "1.3.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "six" },
+    { name = "six", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ce/70/15ce8551d65b324e18c5aa6ef6998880f21ead51ebe5ed743c0950d7d9dd/retrying-1.3.4.tar.gz", hash = "sha256:345da8c5765bd982b1d1915deb9102fd3d1f7ad16bd84a9700b85f64d24e8f3e", size = 10929 }
 wheels = [
@@ -1084,12 +1093,37 @@ wheels = [
 ]
 
 [[package]]
+name = "ruff"
+version = "0.9.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/7f/60fda2eec81f23f8aa7cbbfdf6ec2ca11eb11c273827933fb2541c2ce9d8/ruff-0.9.3.tar.gz", hash = "sha256:8293f89985a090ebc3ed1064df31f3b4b56320cdfcec8b60d3295bddb955c22a", size = 3586740 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/77/4fb790596d5d52c87fd55b7160c557c400e90f6116a56d82d76e95d9374a/ruff-0.9.3-py3-none-linux_armv6l.whl", hash = "sha256:7f39b879064c7d9670197d91124a75d118d00b0990586549949aae80cdc16624", size = 11656815 },
+    { url = "https://files.pythonhosted.org/packages/a2/a8/3338ecb97573eafe74505f28431df3842c1933c5f8eae615427c1de32858/ruff-0.9.3-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:a187171e7c09efa4b4cc30ee5d0d55a8d6c5311b3e1b74ac5cb96cc89bafc43c", size = 11594821 },
+    { url = "https://files.pythonhosted.org/packages/8e/89/320223c3421962762531a6b2dd58579b858ca9916fb2674874df5e97d628/ruff-0.9.3-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c59ab92f8e92d6725b7ded9d4a31be3ef42688a115c6d3da9457a5bda140e2b4", size = 11040475 },
+    { url = "https://files.pythonhosted.org/packages/b2/bd/1d775eac5e51409535804a3a888a9623e87a8f4b53e2491580858a083692/ruff-0.9.3-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2dc153c25e715be41bb228bc651c1e9b1a88d5c6e5ed0194fa0dfea02b026439", size = 11856207 },
+    { url = "https://files.pythonhosted.org/packages/7f/c6/3e14e09be29587393d188454064a4aa85174910d16644051a80444e4fd88/ruff-0.9.3-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:646909a1e25e0dc28fbc529eab8eb7bb583079628e8cbe738192853dbbe43af5", size = 11420460 },
+    { url = "https://files.pythonhosted.org/packages/ef/42/b7ca38ffd568ae9b128a2fa76353e9a9a3c80ef19746408d4ce99217ecc1/ruff-0.9.3-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5a5a46e09355695fbdbb30ed9889d6cf1c61b77b700a9fafc21b41f097bfbba4", size = 12605472 },
+    { url = "https://files.pythonhosted.org/packages/a6/a1/3167023f23e3530fde899497ccfe239e4523854cb874458ac082992d206c/ruff-0.9.3-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:c4bb09d2bbb394e3730d0918c00276e79b2de70ec2a5231cd4ebb51a57df9ba1", size = 13243123 },
+    { url = "https://files.pythonhosted.org/packages/d0/b4/3c600758e320f5bf7de16858502e849f4216cb0151f819fa0d1154874802/ruff-0.9.3-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:96a87ec31dc1044d8c2da2ebbed1c456d9b561e7d087734336518181b26b3aa5", size = 12744650 },
+    { url = "https://files.pythonhosted.org/packages/be/38/266fbcbb3d0088862c9bafa8b1b99486691d2945a90b9a7316336a0d9a1b/ruff-0.9.3-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:9bb7554aca6f842645022fe2d301c264e6925baa708b392867b7a62645304df4", size = 14458585 },
+    { url = "https://files.pythonhosted.org/packages/63/a6/47fd0e96990ee9b7a4abda62de26d291bd3f7647218d05b7d6d38af47c30/ruff-0.9.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cabc332b7075a914ecea912cd1f3d4370489c8018f2c945a30bcc934e3bc06a6", size = 12419624 },
+    { url = "https://files.pythonhosted.org/packages/84/5d/de0b7652e09f7dda49e1a3825a164a65f4998175b6486603c7601279baad/ruff-0.9.3-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:33866c3cc2a575cbd546f2cd02bdd466fed65118e4365ee538a3deffd6fcb730", size = 11843238 },
+    { url = "https://files.pythonhosted.org/packages/9e/be/3f341ceb1c62b565ec1fb6fd2139cc40b60ae6eff4b6fb8f94b1bb37c7a9/ruff-0.9.3-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:006e5de2621304c8810bcd2ee101587712fa93b4f955ed0985907a36c427e0c2", size = 11484012 },
+    { url = "https://files.pythonhosted.org/packages/a3/c8/ff8acbd33addc7e797e702cf00bfde352ab469723720c5607b964491d5cf/ruff-0.9.3-py3-none-musllinux_1_2_i686.whl", hash = "sha256:ba6eea4459dbd6b1be4e6bfc766079fb9b8dd2e5a35aff6baee4d9b1514ea519", size = 12038494 },
+    { url = "https://files.pythonhosted.org/packages/73/b1/8d9a2c0efbbabe848b55f877bc10c5001a37ab10aca13c711431673414e5/ruff-0.9.3-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:90230a6b8055ad47d3325e9ee8f8a9ae7e273078a66401ac66df68943ced029b", size = 12473639 },
+    { url = "https://files.pythonhosted.org/packages/cb/44/a673647105b1ba6da9824a928634fe23186ab19f9d526d7bdf278cd27bc3/ruff-0.9.3-py3-none-win32.whl", hash = "sha256:eabe5eb2c19a42f4808c03b82bd313fc84d4e395133fb3fc1b1516170a31213c", size = 9834353 },
+    { url = "https://files.pythonhosted.org/packages/c3/01/65cadb59bf8d4fbe33d1a750103e6883d9ef302f60c28b73b773092fbde5/ruff-0.9.3-py3-none-win_amd64.whl", hash = "sha256:040ceb7f20791dfa0e78b4230ee9dce23da3b64dd5848e40e3bf3ab76468dcf4", size = 10821444 },
+    { url = "https://files.pythonhosted.org/packages/69/cb/b3fe58a136a27d981911cba2f18e4b29f15010623b79f0f2510fd0d31fd3/ruff-0.9.3-py3-none-win_arm64.whl", hash = "sha256:800d773f6d4d33b0a3c60e2c6ae8f4c202ea2de056365acfa519aa48acf28e0b", size = 10038168 },
+]
+
+[[package]]
 name = "secretstorage"
 version = "3.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography", marker = "sys_platform != 'darwin'" },
-    { name = "jeepney", marker = "sys_platform != 'darwin'" },
+    { name = "cryptography", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin')" },
+    { name = "jeepney", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/53/a4/f48c9d79cb507ed1373477dbceaba7401fd8a23af63b837fa61f1dcd3691/SecretStorage-3.3.3.tar.gz", hash = "sha256:2403533ef369eca6d2ba81718576c5e0f564d5cca1b58f73a8b23e7d4eeebd77", size = 19739 }
 wheels = [
@@ -1139,8 +1173,8 @@ name = "submitit"
 version = "1.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cloudpickle" },
-    { name = "typing-extensions" },
+    { name = "cloudpickle", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "typing-extensions", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/0a/854409283d533279b1b7523ebb65e1926ff611ee81bdf9c298bbed7b75ac/submitit-1.5.2.tar.gz", hash = "sha256:36a8a54ad4e10171111e7618eefe28fe819f931a89c9cd1f6d2770900c013f12", size = 80390 }
 wheels = [
@@ -1152,7 +1186,7 @@ name = "sympy"
 version = "1.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mpmath" },
+    { name = "mpmath", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ca/99/5a5b6f19ff9f083671ddf7b9632028436167cd3d33e11015754e41b249a4/sympy-1.13.1.tar.gz", hash = "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f", size = 7533040 }
 wheels = [
@@ -1195,22 +1229,22 @@ version = "2.1.2+cu121"
 source = { registry = "https://download.pytorch.org/whl/cu121" }
 resolution-markers = [
     "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
     "(python_full_version >= '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux'",
     "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
     "(python_full_version < '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux'",
 ]
 dependencies = [
-    { name = "filelock", marker = "sys_platform != 'darwin'" },
-    { name = "fsspec", marker = "sys_platform != 'darwin'" },
-    { name = "jinja2", marker = "sys_platform != 'darwin'" },
-    { name = "networkx", marker = "sys_platform != 'darwin'" },
-    { name = "sympy", marker = "sys_platform != 'darwin'" },
+    { name = "filelock", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "fsspec", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "jinja2", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "networkx", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "sympy", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
     { name = "triton", marker = "(implementation_name != 'cpython' and platform_machine == 'x86_64' and sys_platform == 'linux') or (os_name != 'nt' and platform_machine == 'x86_64' and sys_platform == 'linux')" },
-    { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
+    { name = "typing-extensions", marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/cu121/torch-2.1.2%2Bcu121-cp311-cp311-linux_x86_64.whl", hash = "sha256:ca05cae9334504d1903e16c50ddf045329a859d5b1a27ed2dc1d58ed066df6fa" },
@@ -1254,14 +1288,14 @@ version = "2.1.2+cu121"
 source = { registry = "https://download.pytorch.org/whl/cu121" }
 resolution-markers = [
     "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version >= '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
     "(python_full_version >= '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
-    "(python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "python_full_version < '3.12' and implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'",
     "(python_full_version < '3.12' and implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.12' and implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux')",
 ]
 dependencies = [
-    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/cu121/torchaudio-2.1.2%2Bcu121-cp311-cp311-linux_x86_64.whl", hash = "sha256:8c5a6f5e4d440d77d4fcac55155effc464a990621d7648a715567b7895abf275" },
@@ -1291,7 +1325,7 @@ name = "triton"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "filelock", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "filelock", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (implementation_name != 'cpython' and sys_platform != 'darwin' and sys_platform != 'linux') or (os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/c1/54fffb2eb13d293d9a429fead3646752ea190de0229bcf3d591ba2481263/triton-2.1.0-0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:919b06453f0033ea52c13eaf7833de0e57db3178d23d4e04f9fc71c4f2c32bf8", size = 89234153 },
@@ -1329,26 +1363,26 @@ name = "usdb-syncer"
 version = "0.0.0"
 source = { git = "https://github.com/randompersona1/usdb_syncer?branch=python3.11#bb77d2cf012563dcfbdf813b82744657162fb29e" }
 dependencies = [
-    { name = "appdirs" },
-    { name = "attrs" },
-    { name = "beautifulsoup4" },
+    { name = "appdirs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "attrs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "beautifulsoup4", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "dbus-python", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform == 'linux') or (platform_machine == 'aarch64' and sys_platform == 'linux')" },
-    { name = "ffmpeg-normalize" },
-    { name = "filetype" },
-    { name = "importlib-metadata" },
-    { name = "keyring" },
-    { name = "lxml" },
-    { name = "mutagen" },
-    { name = "pdfme" },
-    { name = "pillow" },
-    { name = "poetry-dynamic-versioning" },
-    { name = "pyside6" },
-    { name = "requests" },
-    { name = "rookiepy" },
-    { name = "send2trash" },
-    { name = "unidecode" },
-    { name = "wheel" },
-    { name = "yt-dlp", extra = ["curl-cffi", "default"] },
+    { name = "ffmpeg-normalize", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "filetype", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "importlib-metadata", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "keyring", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "lxml", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "mutagen", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pdfme", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pillow", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "poetry-dynamic-versioning", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pyside6", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "requests", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "rookiepy", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "send2trash", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "unidecode", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "wheel", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "yt-dlp", extra = ["curl-cffi", "default"], marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 
 [[package]]
@@ -1356,21 +1390,25 @@ name = "ussplitter"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "demucs" },
-    { name = "flask" },
-    { name = "gunicorn" },
-    { name = "numpy" },
-    { name = "platformdirs" },
-    { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform != 'darwin'" },
-    { name = "torchaudio", version = "2.1.2", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
-    { name = "torchaudio", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torchaudio", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "demucs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "flask", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "gunicorn", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "numpy", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "platformdirs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "usdb-syncer" },
+    { name = "isort", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "ruff", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "usdb-syncer", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+]
+torch = [
+    { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "torchaudio", version = "2.1.2", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
+    { name = "torchaudio", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
+    { name = "torchaudio", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 
 [package.metadata]
@@ -1380,14 +1418,20 @@ requires-dist = [
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "numpy", specifier = "~=1.24.1" },
     { name = "platformdirs", specifier = ">=4.3.6" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "isort", specifier = ">=5.13.2" },
+    { name = "ruff", specifier = ">=0.9.3" },
+    { name = "usdb-syncer", git = "https://github.com/randompersona1/usdb_syncer?branch=python3.11" },
+]
+torch = [
     { name = "torch", marker = "sys_platform != 'darwin'", specifier = ">=2.1.2", index = "https://download.pytorch.org/whl/cu121" },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.1.2" },
     { name = "torchaudio", marker = "sys_platform != 'darwin'", specifier = "<2.2.0", index = "https://download.pytorch.org/whl/cu121" },
     { name = "torchaudio", marker = "sys_platform == 'darwin'", specifier = "<2.2.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "usdb-syncer", git = "https://github.com/randompersona1/usdb_syncer?branch=python3.11" }]
 
 [[package]]
 name = "websockets"
@@ -1436,7 +1480,7 @@ name = "werkzeug"
 version = "3.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markupsafe" },
+    { name = "markupsafe", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9f/69/83029f1f6300c5fb2471d621ab06f6ec6b3324685a2ce0f9777fd4a8b71e/werkzeug-3.1.3.tar.gz", hash = "sha256:60723ce945c19328679790e3282cc758aa4a6040e4bb330f53d30fa546d44746", size = 806925 }
 wheels = [
@@ -1463,18 +1507,18 @@ wheels = [
 
 [package.optional-dependencies]
 curl-cffi = [
-    { name = "curl-cffi", version = "0.5.10", source = { registry = "https://pypi.org/simple" }, marker = "(implementation_name == 'cpython' and os_name == 'nt' and platform_machine != 'aarch64' and sys_platform == 'linux') or (implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "curl-cffi", version = "0.5.10", source = { registry = "https://pypi.org/simple" }, marker = "implementation_name == 'cpython' and os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'" },
     { name = "curl-cffi", version = "0.7.1", source = { registry = "https://pypi.org/simple" }, marker = "implementation_name == 'cpython' and os_name != 'nt'" },
 ]
 default = [
-    { name = "brotli", marker = "implementation_name == 'cpython'" },
+    { name = "brotli", marker = "(implementation_name == 'cpython' and os_name != 'nt') or (implementation_name == 'cpython' and platform_machine == 'aarch64') or (implementation_name == 'cpython' and sys_platform != 'linux')" },
     { name = "brotlicffi", marker = "implementation_name != 'cpython'" },
-    { name = "certifi" },
-    { name = "mutagen" },
-    { name = "pycryptodomex" },
-    { name = "requests" },
-    { name = "urllib3" },
-    { name = "websockets" },
+    { name = "certifi", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "mutagen", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "pycryptodomex", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "requests", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "urllib3", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "websockets", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 
 [[package]]
