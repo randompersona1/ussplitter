@@ -1,15 +1,10 @@
 FROM nvidia/cuda:12.1.0-base-ubuntu22.04
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Download and install model
-ADD https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/f7e0c4bc-ba3fe64a.th /app/models/hub/checkpoints/f7e0c4bc-ba3fe64a.th
-ADD https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/d12395a8-e57c48e6.th /app/models/hub/checkpoints/d12395a8-e57c48e6.th
-ADD https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/92cfc3b6-ef3bcb9c.th /app/models/hub/checkpoints/92cfc3b6-ef3bcb9c.th
-ADD https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/04573f0d-f3cf25b2.th /app/models/hub/checkpoints/04573f0d-f3cf25b2.th
-ENV TORCH_HOME=/app/models
-
 # Set working directory
 WORKDIR /app
+ENV TORCH_HOME=/app/models
+ENV TORCHAUDIO_USE_BACKEND_DISPATCHER=1
 
 # We set the timezone because ffmpegs dependancy `tzdata` will otherwise prompt us to set it interactively
 ENV DEBIAN_FRONTEND=noninteractive
@@ -32,16 +27,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --link-mode=copy --only-group torch
 
 # Copy all files
-ADD src/ussplitter ./ussplitter
+ADD src/ussplitter ./src/ussplitter
 ADD .python-version .
 ADD pyproject.toml .
 ADD uv.lock .
-
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --only-group torch
+ADD README.md .
+ADD LICENSE .
 
 EXPOSE 5000
 
 # Run the application
 # DO NOT TOUCH THE WORKERS. CODE IS NOT THREAD SAFE
-CMD ["uv", "run", "--no-dev", "--group", "torch", "gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "ussplitter.server:app"]
+CMD ["uv", "run", "--no-dev", "--group", "torch", "waitress-serve", "--listen", "0.0.0.0:5000", "--threads", "1", "ussplitter.server:app"]

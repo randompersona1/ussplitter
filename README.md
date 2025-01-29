@@ -75,9 +75,9 @@ Create the `addon_config` directory and a `ussplitter.txt` inside it. The only c
 
 If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/) to manage the project. Then, install the dependancies with `uv sync --no-dev`.
 
-Currently, `gunicorn` is used, which does not work on windows. Replace it with a different wsgi server like waitress. For gunicorn, the run command is:
+To start the server, run:
 
-`uv run gunicorn -b 0.0.0.0:5000 -w 1 ussplitter.server:app`
+`uv run waitress -b 0.0.0.0:5000 -w 1 ussplitter.server:app`
 
 Do not use more than one worker. Instead of a database, pure python is used, meaning workers cannot share data.
 

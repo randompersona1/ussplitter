@@ -506,18 +506,6 @@ wheels = [
 ]
 
 [[package]]
-name = "gunicorn"
-version = "23.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "packaging", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/7d/6dac2a6e1eba33ee43f318edbed4ff29151a49b5d37f080aad1e6469bca4/gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d", size = 85029 },
-]
-
-[[package]]
 name = "idna"
 version = "3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -1534,13 +1522,13 @@ dependencies = [
 [[package]]
 name = "ussplitter"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "demucs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "flask", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
-    { name = "gunicorn", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "numpy", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "platformdirs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
+    { name = "waitress", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 
 [package.dev-dependencies]
@@ -1570,9 +1558,9 @@ torch = [
 requires-dist = [
     { name = "demucs", git = "https://github.com/adefossez/demucs?rev=b9ab48cad45976ba42b2ff17b229c071f0df9390" },
     { name = "flask", specifier = ">=3.1.0" },
-    { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "numpy", specifier = "~=1.24.1" },
     { name = "platformdirs", specifier = ">=4.3.6" },
+    { name = "waitress", specifier = ">=3.0.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -1595,6 +1583,15 @@ torch = [
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.1.2" },
     { name = "torchaudio", marker = "sys_platform != 'darwin'", specifier = "<2.2.0", index = "https://download.pytorch.org/whl/cu121" },
     { name = "torchaudio", marker = "sys_platform == 'darwin'", specifier = "<2.2.0" },
+]
+
+[[package]]
+name = "waitress"
+version = "3.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/cb/04ddb054f45faa306a230769e868c28b8065ea196891f09004ebace5b184/waitress-3.0.2.tar.gz", hash = "sha256:682aaaf2af0c44ada4abfb70ded36393f0e307f4ab9456a215ce0020baefc31f", size = 179901 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/57/a27182528c90ef38d82b636a11f606b0cbb0e17588ed205435f8affe3368/waitress-3.0.2-py3-none-any.whl", hash = "sha256:c56d67fd6e87c2ee598b76abdd4e96cfad1f24cacdea5078d382b1f9d7b5ed2e", size = 56232 },
 ]
 
 [[package]]
