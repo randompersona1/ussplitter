@@ -16,8 +16,10 @@ The server is expected to have the following endpoints:
 - POST /cleanupall: Cleans up all files on the server.
 """
 
+import logging
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin
 
 import appdirs
@@ -35,20 +37,31 @@ NECCESARY_CONFIG_KEYS = ["SERVER_URI"]
 logger = usdb_logger.logger
 
 
+class AddonLogger(logging.LoggerAdapter):
+    """Logger wrapper for general addon logs."""
+
+    def __init__(self, addon_name: str, logger_: Any, extra: Any = ...) -> None:
+        super().__init__(logger_, extra)
+        self.addon_name = addon_name.upper()
+
+    def process(self, msg: str, kwargs: Any) -> Any:
+        return f"[{self.addon_name}]: {msg}", kwargs
+
+
 def initialize_addon() -> None:
     """
     Initialize the addon by loading configs and subscribing to events
     """
-    addon_logger = usdb_logger.logger.getChild("ussplitter")
+    addon_logger = AddonLogger("ussplitter", logger)
 
-    addon_logger.debug("Initializing remote audio splitter addon.")
+    addon_logger.debug("Initializing ussplitter addon.")
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    addon_logger.debug(f"Using config directory {CONFIG_DIR}")
+    addon_logger.debug(f'Using config directory "{CONFIG_DIR}".')
 
     config_file = CONFIG_DIR.joinpath("ussplitter.txt")
     if not config_file.exists():
         addon_logger.error(
-            f"Config file not found. Please create a config file at {config_file}"
+            f'Config file not found. Please create a config file at "{config_file}".'
         )
         return
 
@@ -63,15 +76,14 @@ def initialize_addon() -> None:
 
     for key in NECCESARY_CONFIG_KEYS:
         if key not in CONFIGS:
-            addon_logger.error(f"{key} not found in config file. Please add it.")
+            addon_logger.error(
+                f"{key} not found in config file, but it is required. Addon will now exit."
+            )
             return
-    assert CONFIGS["SERVER_URI"] is not None, "SERVER_URI is required in config file."
-    assert CONFIGS["SERVER_URI"].startswith(
-        "http://"
-    ), "SERVER_URI must start with http://."
+    addon_logger.debug("All required config keys found.")
 
     hooks.SongLoaderDidFinish.subscribe(on_download_finished)
-    addon_logger.debug("Subscribed to SongLoaderDidFinish event.")
+    addon_logger.debug('Subscribed to "SongLoaderDidFinish" event.')
 
 
 def write_song_tags(
@@ -245,7 +257,6 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
             break
 
         if not vocals_downloaded:
-
             song_logger.debug("Trying to download vocals.")
             vocals_downloaded = download_file_from_server(
                 base_url=CONFIGS["SERVER_URI"],
@@ -258,7 +269,6 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
                 error_retry -= 1
 
         if not instrumental_downloaded:
-
             song_logger.debug("Trying to download instrumental.")
             instrumental_downloaded = download_file_from_server(
                 base_url=CONFIGS["SERVER_URI"],
@@ -270,12 +280,13 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
             if not instrumental_downloaded:
                 error_retry -= 1
 
+        time.sleep(5)
+
     # Write the tags to the song file
     song_txt = song_folder.joinpath(song.sync_meta.txt.fname)
     write_song_tags(
         song_txt, vocals_dest_path.name, instrumental_dest_path.name, song_logger
     )
-    song_logger.debug(f"Wrote tags for {song.song_id}")
 
     try:
         # Cleanup on server
