@@ -69,6 +69,7 @@ class ArgsError(AudioSplitError):
 
 
 def init_db() -> None:
+    logger.debug("Initializing database.")
     with get_db() as db:
         db.execute(
             """
@@ -91,7 +92,11 @@ def init_db() -> None:
 
 @contextlib.contextmanager
 def get_db() -> Generator[sqlite3.Connection, None, None]:
-    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn = sqlite3.connect(DB_PATH)
+    except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise e
     try:
         yield conn
     finally:
@@ -104,6 +109,8 @@ def make_folder() -> tuple[str, Path]:
 
     :return: A tuple containing the UUID of the song and the path where the mp3 file will be stored
     """
+    logger.debug(f"Creating directory for {uuid}.")
+
     song_uuid = str(uuid.uuid4())
 
     tempdir = FILE_DIRECTORY.joinpath(song_uuid)
@@ -121,6 +128,8 @@ def put(song_uuid: str) -> None:
     :param uuid: The UUID of the song
     :return: None
     """
+    logger.debug(f"Got {song_uuid}. Queuing...")
+
     with get_db() as db:
         db.execute("INSERT INTO queue (song_uuid) VALUES (?)", (song_uuid,))
         db.execute(
@@ -137,6 +146,7 @@ def get_status(song_uuid: str) -> SplitStatus:
     :param song_uuid: The UUID of the song
     :return: True if the song has been separated, False otherwise
     """
+
     with get_db() as db:
         status = db.execute(
             "SELECT status FROM status WHERE song_uuid = ?", (song_uuid,)
@@ -144,6 +154,7 @@ def get_status(song_uuid: str) -> SplitStatus:
         result = status.fetchone()
         if result is None:
             return SplitStatus.NONE
+        logger.debug(f"Got status {result[0]} for {song_uuid}.")
         return SplitStatus[result[0]]
 
 
@@ -154,6 +165,8 @@ def get_vocals(song_uuid: str) -> Path:
     :param song_uuid: The UUID of the song
     :return: The path to the vocals file
     """
+    logger.debug(f"Getting vocals for {song_uuid}.")
+
     return (
         FILE_DIRECTORY.joinpath(song_uuid)
         .joinpath("htdemucs_ft")
@@ -169,6 +182,8 @@ def get_instrumental(song_uuid: str) -> Path:
     :param song_uuid: The UUID of the song
     :return: The path to the instrumental file
     """
+    logger.debug(f"Getting instrumental for {song_uuid}.")
+
     return (
         FILE_DIRECTORY.joinpath(song_uuid)
         .joinpath("htdemucs_ft")
@@ -270,7 +285,6 @@ def split_worker() -> None:
         args = SplitArgs(input_file=input_file, output_dir=path, model=model)
 
         try:
-            logger.info("Separating...")
             separate_audio(args)
             with get_db() as db:
                 db.execute(
@@ -325,4 +339,5 @@ def separate_audio(args: SplitArgs) -> None:
         stack.enter_context(contextlib.suppress(Exception))
         if "tqdm" in sys.modules:
             sys.modules["tqdm"].tqdm = lambda *args, **kwargs: args[0] if args else None  # type: ignore
+        logger.debug(f"Running `demucs separate {' '.join(demucs_args)}`.")
         demucs.separate.main(demucs_args)

@@ -39,5 +39,4 @@ RUN uv sync --frozen --only-group torch
 EXPOSE 5000
 
 # Run the application
-# DO NOT TOUCH THE WORKERS. CODE IS NOT THREAD SAFE
-CMD ["uv", "run", "--frozen", "--no-dev", "--group", "torch", "waitress-serve", "--listen", "0.0.0.0:5000", "--threads", "1", "ussplitter.server:app"]
+CMD ["uv", "run", "--frozen", "--no-dev", "--group", "torch", "waitress-serve", "--listen", "0.0.0.0:5000", "--threads", "4", "ussplitter.server:app"]
