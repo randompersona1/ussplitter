@@ -14,10 +14,13 @@ def split():
     if input_file is None:
         return "No audio file provided", 400
 
+    # get model from request args
+    model = flask.request.args.get(key="model", type=str)
+
     song_uuid, song_path = backend.make_folder()
     input_file.save(song_path)
 
-    backend.put(song_uuid)
+    backend.put(song_uuid, model)
 
     # Return uuid so the files can be retrieved
     return song_uuid, 200
