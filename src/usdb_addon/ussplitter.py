@@ -164,6 +164,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     # Create a custom logger for the song to match usdb_syncer's logging format
     # {date} {time} {level} {song_id} {message}
     song_logger = usdb_logger.song_logger(song.song_id)
+    song_logger.debug(f"Addon {__name__} called.")
 
     if not song.sync_meta:
         song_logger.error("Missing sync_meta. This should never happen.")
@@ -178,13 +179,25 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     song_folder: Path = song.sync_meta.path.parent
     song_mp3 = song_folder.joinpath(song.sync_meta.audio.fname)
 
+    # Get the model to use for splitting. If not provided, use None and let the server decide on the default.
+    model = CONFIGS.get("DEMUCS_MODEL", None)
+    song_logger.debug(f"Using model {model} for splitting.")
+
     # Send the file to the server
     try:
         response = requests.post(
             urljoin(CONFIGS["SERVER_URI"], "/split"),
+            params={"model": model},
             files={"audio": open(song_mp3, "rb")},
+            timeout=2,
         )
         response.raise_for_status()
+    except requests.exceptions.Timeout as e:
+        song_logger.debug(e)
+        song_logger.error(
+            "Timeout while sending file to server. Check if server is running"
+        )
+        return
     except requests.exceptions.HTTPError as e:
         song_logger.debug(e)
         song_logger.error("Failed to send file to server.")
@@ -252,7 +265,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     instrumental_downloaded = False
     error_retry = 5
     while not vocals_downloaded or not instrumental_downloaded:
-        if error_retry == 0:
+        if error_retry <= 0:
             song_logger.error("Too many retries downloading mp3 files. Giving up.")
             break
 

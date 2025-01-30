@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum, auto, unique
 from pathlib import Path
-from typing import Generator
+from typing import Generator, cast
 
 import demucs.api
 import demucs.separate
@@ -23,6 +23,8 @@ FILE_DIRECTORY = Path(
     )
 )
 DB_PATH = FILE_DIRECTORY.joinpath("db.sqlite")
+
+DEFAULT_MODEL = "htdemucs"
 
 
 logging.basicConfig(
@@ -47,7 +49,7 @@ class SplitArgs:
     input_file: Path
     output_dir: Path
     bitrate: int = 128
-    model: str = "htdemucs_ft"
+    model: str = DEFAULT_MODEL
 
 
 class AudioSplitError(Exception):
@@ -109,9 +111,9 @@ def make_folder() -> tuple[str, Path]:
 
     :return: A tuple containing the UUID of the song and the path where the mp3 file will be stored
     """
-    logger.debug(f"Creating directory for {uuid}.")
 
     song_uuid = str(uuid.uuid4())
+    logger.debug(f"Creating directory for {song_uuid}.")
 
     tempdir = FILE_DIRECTORY.joinpath(song_uuid)
     tempdir.mkdir(exist_ok=False)
@@ -121,17 +123,19 @@ def make_folder() -> tuple[str, Path]:
     return song_uuid, mp3_file
 
 
-def put(song_uuid: str) -> None:
+def put(song_uuid: str, model: str | None = None) -> None:
     """
     Put a song into the queue to be separated
 
     :param uuid: The UUID of the song
     :return: None
     """
-    logger.debug(f"Got {song_uuid}. Queuing...")
+    logger.debug(f"Got {song_uuid} with model {model}. Queuing.")
 
     with get_db() as db:
-        db.execute("INSERT INTO queue (song_uuid) VALUES (?)", (song_uuid,))
+        db.execute(
+            "INSERT INTO queue (song_uuid, model) VALUES (?, ?)", (song_uuid, model)
+        )
         db.execute(
             "INSERT INTO status (song_uuid, status) VALUES (?, ?)",
             (song_uuid, SplitStatus.PENDING.name),
@@ -167,12 +171,10 @@ def get_vocals(song_uuid: str) -> Path:
     """
     logger.debug(f"Getting vocals for {song_uuid}.")
 
-    return (
-        FILE_DIRECTORY.joinpath(song_uuid)
-        .joinpath("htdemucs_ft")
-        .joinpath("input")
-        .joinpath("vocals.mp3")
-    )
+    for path in FILE_DIRECTORY.joinpath(song_uuid).rglob("vocals.mp3"):
+        return path
+
+    raise FileNotFoundError(f"Vocals file not found for {song_uuid}.")
 
 
 def get_instrumental(song_uuid: str) -> Path:
@@ -184,12 +186,11 @@ def get_instrumental(song_uuid: str) -> Path:
     """
     logger.debug(f"Getting instrumental for {song_uuid}.")
 
-    return (
-        FILE_DIRECTORY.joinpath(song_uuid)
-        .joinpath("htdemucs_ft")
-        .joinpath("input")
-        .joinpath("no_vocals.mp3")
-    )
+    # We need the model name to get the correct file
+    for path in FILE_DIRECTORY.joinpath(song_uuid).rglob("no_vocals.mp3"):
+        return path
+
+    raise FileNotFoundError(f"Instrumental file not found for {song_uuid}.")
 
 
 def cleanup(song_uuid: str) -> bool:
@@ -208,9 +209,9 @@ def cleanup(song_uuid: str) -> bool:
         status = status.fetchone()
         if (
             status is None
-            or status[0] == SplitStatus.NONE.name
-            or status[0] == SplitStatus.PROCESSING.name
-            or status[0] == SplitStatus.PENDING.name
+            or cast(str, status[0]) == SplitStatus.NONE.name  # type: ignore
+            or cast(str, status[0]) == SplitStatus.PROCESSING.name  # type: ignore
+            or cast(str, status[0]) == SplitStatus.PENDING.name  # type: ignore
         ):
             return False
 
@@ -264,12 +265,34 @@ def split_worker() -> None:
             time.sleep(1)
             continue
 
-        song_uuid = task[0]
-        model = task[1]
-        if model is None:
-            model = "htdemucs_ft"
+        song_uuid = cast(str, task[0])  # type: ignore
+        model = cast(str, task[1])  # type: ignore
+        if model is None or model == "":
+            logger.info(
+                f"No model specified for {song_uuid}. Using default model {DEFAULT_MODEL}."
+            )
+            model = DEFAULT_MODEL
+        elif (
+            (
+                demucs.api.list_models().get("single") is None
+                or model not in demucs.api.list_models().get("single").keys()
+            )  # type: ignore
+            and (
+                demucs.api.list_models().get("bag") is None
+                or model not in demucs.api.list_models().get("bag").keys()
+            )  # type: ignore
+        ):
+            logger.warning(
+                f'Invalid model "{model}". Using default model {DEFAULT_MODEL}.'
+            )
+            model = DEFAULT_MODEL
+        elif model.endswith("_q"):
+            logger.warning(
+                f"Model {model} is quantized. Quantized models are not supported. Using default model {DEFAULT_MODEL}."
+            )
+            model = DEFAULT_MODEL
 
-        logger.info(f"Picked up task {task[0]} with model {model}.")
+        logger.info(f"Picked up task {song_uuid} with model {model}.")
 
         with get_db() as db:
             db.execute("DELETE FROM queue WHERE song_uuid = ?", (song_uuid,))
@@ -284,6 +307,8 @@ def split_worker() -> None:
 
         args = SplitArgs(input_file=input_file, output_dir=path, model=model)
 
+        timebefore = time.time()
+
         try:
             separate_audio(args)
             with get_db() as db:
@@ -292,7 +317,9 @@ def split_worker() -> None:
                     (SplitStatus.FINISHED.name, song_uuid),
                 )
                 db.commit()
-            logger.info("Finished separating.")
+            logger.info(
+                f"Done. Separation took {time.time() - timebefore:.2f} seconds."
+            )
         except AssertionError as e:
             with get_db() as db:
                 db.execute(
@@ -339,5 +366,5 @@ def separate_audio(args: SplitArgs) -> None:
         stack.enter_context(contextlib.suppress(Exception))
         if "tqdm" in sys.modules:
             sys.modules["tqdm"].tqdm = lambda *args, **kwargs: args[0] if args else None  # type: ignore
-        logger.debug(f"Running `demucs separate {' '.join(demucs_args)}`.")
+        logger.debug(f"Running `demucs {' '.join(demucs_args)}`.")
         demucs.separate.main(demucs_args)

@@ -1,1 +1,2 @@
 SERVER_URI=http://localhost:5000
+DEMUCS_MODEL=htdemucs_ft

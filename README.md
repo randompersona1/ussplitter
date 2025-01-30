@@ -26,16 +26,16 @@ Additionally, the approach is modular. For example, it would be very easy to wri
 ## Install
 
 > [!CAUTION]
-> This is entirely untested on linux and macos. There isn't a whole lot that could happen, but still.
+> This is untested on macos. If you have a mac and can confirm, this will run, please leave a comment.
 
 > [!WARNING]
-> You should be somewhat technically inclined to use this. There are almost certainly bugs. Please make sure you backup your songs.
-
-> [!WARNING] 
-> You should have a somewhat modern nvidia graphics card. Splitting will fall back to cpu if that's not available, but will take unreasonable amounts of time. Note that the docker image is currently enormous (~8GB). This may or may not change.
+> You should be somewhat technically inclined to use the addon. There are probably certainly bugs. Please make sure you backup your songs.
 
 > [!WARNING]
-> Stem separation uses quite a lot of ram. I don't recommend using this with less than 16GB of system memory. Future updates will allow using smaller models, allowing for a smaller memory footprint.
+> Best results are achieved with a nvidia gpu. If you don't have one, you should probably only use the `htdemucs` model. On my Ryzen 5900x, separating with `htdemucs` takes ~ seconds
+
+> [!WARNING]
+> Stem separation uses quite a lot of ram. I don't recommend using the addon with less than 16GB of system memory.
 
 ### Required
 
@@ -69,17 +69,21 @@ Grab the addon file from `src/usdb_addon/ussplitter.py`. Put the python file int
 
 The addon needs to be configured. I have decided to use an `addon_config` directory next to `addons`. This will almost certainly change in the future.
 
-Create the `addon_config` directory and a `ussplitter.txt` inside it. The only configuration needed is a line with `SERVER_URI=http://localhost:5000`.
+Create the `addon_config` directory and a `ussplitter.txt` inside it (or copy it from `src/usdb_addon/ussplitter.txt`). The file follows a basic line-separated `KEY=VALUE` structure. The following options are implemented:
+
+| Option name | Value | Required | Default |
+| ----------- | ----- | -------- | ------- |
+| SERVER_URI  | base uri of the server you want to connect to, e.g. http://localhost:5000 | yes |  |
+| DEMUCS_MODEL | the model you want to use. See [demucs](https://github.com/adefossez/demucs) for the list of models. Note that quantised models currently do not work | no | htdemucs
+
 
 ## Manual usage
 
-If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/) to manage the project. Then, install the dependancies with `uv sync --no-dev`.
+If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/) to manage the project. Then, install the dependancies with `uv sync --group torch`.
 
 To start the server, run:
 
-`uv run waitress -b 0.0.0.0:5000 -w 1 ussplitter.server:app`
-
-Do not use more than one worker. Instead of a database, pure python is used, meaning workers cannot share data.
+`uv run --only-group torch waitress --listen 0.0.0.0:5000 ussplitter.server:app`
 
 
 ## Development
