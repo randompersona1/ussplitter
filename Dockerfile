@@ -26,18 +26,24 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=.python-version,target=.python-version \
     uv sync --frozen --no-install-project --link-mode=copy --no-dev --group torch
 
-# Copy all files
-COPY pyproject.toml uv.lock .python-version README.md LICENSE src ./
-
-
 
 FROM nvidia/cuda:12.1.0-base-ubuntu22.04
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 
 COPY --from=builder /app /app
 COPY --from=builder /root/.local/share/uv /root/.local/share/uv
 
 WORKDIR /app
+
+COPY pyproject.toml uv.lock .python-version README.md LICENSE src ./
 
 RUN uv sync --frozen --no-dev --group torch
 
