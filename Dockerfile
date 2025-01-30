@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-base-ubuntu22.04
+FROM nvidia/cuda:12.1.0-base-ubuntu22.04 AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Set working directory
@@ -27,16 +27,19 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --link-mode=copy --only-group torch
 
 # Copy all files
-ADD src/ussplitter ./src/ussplitter
-ADD .python-version .
-ADD pyproject.toml .
-ADD uv.lock .
-ADD README.md .
-ADD LICENSE .
+ADD . .
 
-RUN uv sync --frozen --only-group torch
+RUN uv sync --frozen --only-group torch && \
+    rm -rf /root/.cache/uv
+
+
+FROM nvidia/cuda:12.1.0-base-ubuntu22.04
+
+COPY --from=builder /app /app
+
+WORKDIR /app
 
 EXPOSE 5000
 
 # Run the application
-CMD ["uv", "run", "--frozen", "--no-dev", "--group", "torch", "waitress-serve", "--listen", "0.0.0.0:5000", "--threads", "4", "ussplitter.server:app"]
+CMD ["/app/.venv/bin/waitress-serve", "--listen", "0.0.0.0:5000", "--threads", "4", "ussplitter.server:app"]
