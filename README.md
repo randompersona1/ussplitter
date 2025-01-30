@@ -13,29 +13,29 @@ You need both to run this addon.
 
 ## Motivation
 
-Stem separation is resource-intensive. USSplitter allows a powerful server, ideally cuda-accelerated, to split the files while usdb_syncer is run on a light machine. Of course, it possible to just run the server on the same machine if you wish.
+Stem separation is resource-intensive. USSplitter allows a powerful server, ideally cuda-accelerated, to split the files while usdb_syncer is run on a light machine. Of course, it is possible to just run the server on the same machine if you wish.
 
 Additionally, the approach is modular. For example, it would be very easy to write a script that runs through an entire song library, splitting everything. USSplitter provides a simple interface, manages resources, and can be expanded at will. 
 
 ## Current problems
 
 - cannot change existing `#VOCALS` or `INSTRUMENTAL` tags. 
-- uses internal methods of usdb_syncer. This could break the addon in future releases
+- uses internal methods of usdb_syncer. This could break the addon in future releases of usdb_syncer
 - since there are no standards for addons, for example regarding their configuration, I have simply created some. These aren't great, so they will almost certainly change. 
 
 ## Install
 
 > [!CAUTION]
-> This is entirely untested on linux and macos. There isn't a whole lot that could happen, but still.
+> This is untested on macos. If you have a mac and can confirm the addon works, please leave a comment.
 
 > [!WARNING]
-> You should be somewhat technically inclined to use this. There are almost certainly bugs. Please make sure you backup your songs.
-
-> [!WARNING] 
-> You should have a somewhat modern nvidia graphics card. Splitting will fall back to cpu if that's not available, but will take unreasonable amounts of time. Note that the docker image is currently enormous (~8GB). This may or may not change.
+> You should be somewhat technically inclined to use the addon. There are probably certainly bugs. Please make sure you backup your songs.
 
 > [!WARNING]
-> Stem separation uses quite a lot of ram. I don't recommend using this with less than 16GB of system memory. Future updates will allow using smaller models, allowing for a smaller memory footprint.
+> Best results are achieved with a nvidia gpu. If you don't have one, you should only use the `htdemucs` model. On my Ryzen 5900x, separating with `htdemucs` takes ~70 seconds.
+
+> [!WARNING]
+> Stem separation uses quite a lot of ram. I don't recommend using the addon with less than 16GB of system memory.
 
 ### Required
 
@@ -69,17 +69,21 @@ Grab the addon file from `src/usdb_addon/ussplitter.py`. Put the python file int
 
 The addon needs to be configured. I have decided to use an `addon_config` directory next to `addons`. This will almost certainly change in the future.
 
-Create the `addon_config` directory and a `ussplitter.txt` inside it. The only configuration needed is a line with `SERVER_URI=http://localhost:5000`.
+Create the `addon_config` directory and a `ussplitter.txt` inside it (or copy it from `src/usdb_addon/ussplitter.txt`). The file follows a basic line-separated `KEY=VALUE` structure. The following options are implemented:
+
+| Option name | Value | Required | Default |
+| ----------- | ----- | -------- | ------- |
+| SERVER_URI  | base uri of the server you want to connect to, e.g. http://localhost:5000 | yes |  |
+| DEMUCS_MODEL | the model you want to use. See [demucs](https://github.com/adefossez/demucs) for the list of models. I recommend `htdemucs`. Use `htdemucs_ft` if you have a cuda GPU and want a tiny bit of extra clarity. Note that quantised models (ending in `_q`) currently do not work | no | htdemucs
+
 
 ## Manual usage
 
-If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/) to manage the project. Then, install the dependancies with `uv sync --no-dev`.
+If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/) to manage the project. Then, install the dependancies with `uv sync --group torch`.
 
-Currently, `gunicorn` is used, which does not work on windows. Replace it with a different wsgi server like waitress. For gunicorn, the run command is:
+To start the server, run:
 
-`uv run gunicorn -b 0.0.0.0:5000 -w 1 ussplitter.server:app`
-
-Do not use more than one worker. Instead of a database, pure python is used, meaning workers cannot share data.
+`uv run --only-group torch waitress --listen 0.0.0.0:5000 ussplitter.server:app`
 
 
 ## Development

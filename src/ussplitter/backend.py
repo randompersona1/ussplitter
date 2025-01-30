@@ -3,23 +3,28 @@ import logging
 import os
 import shlex
 import shutil
+import sqlite3
 import sys
+import time
 import uuid
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto, unique
 from pathlib import Path
-from queue import Queue
-from threading import Lock
+from typing import Generator, cast
 
 import demucs.api
 import demucs.separate
 import platformdirs
+import torch as th
 
 FILE_DIRECTORY = Path(
     platformdirs.user_data_dir(
         "ussplitter", roaming=False, appauthor=False, ensure_exists=True
     )
 )
+DB_PATH = FILE_DIRECTORY.joinpath("db.sqlite")
+
+DEFAULT_MODEL = "htdemucs"
 
 
 logging.basicConfig(
@@ -30,22 +35,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-to_separate = Queue()
-
-status_lock = Lock()
-pending_separations = []
-processing_separations = []
-finished_separations = []
-errored_separations = []
-
-
-@dataclass(frozen=True)
+@unique
 class SplitStatus(Enum):
-    NONE = 0
-    PENDING = 1
-    PROCESSING = 2
-    FINISHED = 3
-    ERROR = 4
+    NONE = auto()
+    PENDING = auto()
+    PROCESSING = auto()
+    FINISHED = auto()
+    ERROR = auto()
 
 
 @dataclass(frozen=True)
@@ -53,7 +49,7 @@ class SplitArgs:
     input_file: Path
     output_dir: Path
     bitrate: int = 128
-    model: str = "htdemucs_ft"
+    model: str = DEFAULT_MODEL
 
 
 class AudioSplitError(Exception):
@@ -62,16 +58,51 @@ class AudioSplitError(Exception):
         self.error_code = error_code
         super().__init__(self.message)
 
-    def __str__(self) -> tuple[int, str]:
-        """
-        :return: A tuple containing the error code and the error message
-        """
-        return self.error_code, self.message
+    def __str__(self):
+        return self.message
+
+    def ec(self):
+        return self.error_code
 
 
 class ArgsError(AudioSplitError):
     def __init__(self, message: str):
         super().__init__(message, 400)
+
+
+def init_db() -> None:
+    logger.debug("Initializing database.")
+    with get_db() as db:
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS queue (
+                song_uuid TEXT PRIMARY KEY NOT NULL,
+                model TEXT
+            )
+        """
+        )
+
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS status (
+                song_uuid TEXT PRIMARY KEY NOT NULL,
+                status TEXT
+            )
+        """
+        )
+
+
+@contextlib.contextmanager
+def get_db() -> Generator[sqlite3.Connection, None, None]:
+    try:
+        conn = sqlite3.connect(DB_PATH)
+    except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise e
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def make_folder() -> tuple[str, Path]:
@@ -80,7 +111,9 @@ def make_folder() -> tuple[str, Path]:
 
     :return: A tuple containing the UUID of the song and the path where the mp3 file will be stored
     """
+
     song_uuid = str(uuid.uuid4())
+    logger.debug(f"Creating directory for {song_uuid}.")
 
     tempdir = FILE_DIRECTORY.joinpath(song_uuid)
     tempdir.mkdir(exist_ok=False)
@@ -90,16 +123,24 @@ def make_folder() -> tuple[str, Path]:
     return song_uuid, mp3_file
 
 
-def put(song_uuid: str) -> None:
+def put(song_uuid: str, model: str | None = None) -> None:
     """
     Put a song into the queue to be separated
 
     :param uuid: The UUID of the song
     :return: None
     """
-    to_separate.put(song_uuid)
-    with status_lock:
-        pending_separations.append(song_uuid)
+    logger.debug(f"Got {song_uuid} with model {model}. Queuing.")
+
+    with get_db() as db:
+        db.execute(
+            "INSERT INTO queue (song_uuid, model) VALUES (?, ?)", (song_uuid, model)
+        )
+        db.execute(
+            "INSERT INTO status (song_uuid, status) VALUES (?, ?)",
+            (song_uuid, SplitStatus.PENDING.name),
+        )
+        db.commit()
 
 
 def get_status(song_uuid: str) -> SplitStatus:
@@ -109,16 +150,16 @@ def get_status(song_uuid: str) -> SplitStatus:
     :param song_uuid: The UUID of the song
     :return: True if the song has been separated, False otherwise
     """
-    with status_lock:
-        if song_uuid in pending_separations:
-            return SplitStatus.PENDING
-        if song_uuid in processing_separations:
-            return SplitStatus.PROCESSING
-        if song_uuid in finished_separations:
-            return SplitStatus.FINISHED
-        if song_uuid in errored_separations:
-            return SplitStatus.ERROR
-        return SplitStatus.NONE
+
+    with get_db() as db:
+        status = db.execute(
+            "SELECT status FROM status WHERE song_uuid = ?", (song_uuid,)
+        )
+        result = status.fetchone()
+        if result is None:
+            return SplitStatus.NONE
+        logger.debug(f"Got status {result[0]} for {song_uuid}.")
+        return SplitStatus[result[0]]
 
 
 def get_vocals(song_uuid: str) -> Path:
@@ -128,12 +169,12 @@ def get_vocals(song_uuid: str) -> Path:
     :param song_uuid: The UUID of the song
     :return: The path to the vocals file
     """
-    return (
-        FILE_DIRECTORY.joinpath(song_uuid)
-        .joinpath("htdemucs_ft")
-        .joinpath("input")
-        .joinpath("vocals.mp3")
-    )
+    logger.debug(f"Getting vocals for {song_uuid}.")
+
+    for path in FILE_DIRECTORY.joinpath(song_uuid).rglob("vocals.mp3"):
+        return path
+
+    raise FileNotFoundError(f"Vocals file not found for {song_uuid}.")
 
 
 def get_instrumental(song_uuid: str) -> Path:
@@ -143,12 +184,13 @@ def get_instrumental(song_uuid: str) -> Path:
     :param song_uuid: The UUID of the song
     :return: The path to the instrumental file
     """
-    return (
-        FILE_DIRECTORY.joinpath(song_uuid)
-        .joinpath("htdemucs_ft")
-        .joinpath("input")
-        .joinpath("no_vocals.mp3")
-    )
+    logger.debug(f"Getting instrumental for {song_uuid}.")
+
+    # We need the model name to get the correct file
+    for path in FILE_DIRECTORY.joinpath(song_uuid).rglob("no_vocals.mp3"):
+        return path
+
+    raise FileNotFoundError(f"Instrumental file not found for {song_uuid}.")
 
 
 def cleanup(song_uuid: str) -> bool:
@@ -158,17 +200,28 @@ def cleanup(song_uuid: str) -> bool:
     :param song_uuid: The UUID of the song
     :return: None
     """
-    if song_uuid not in finished_separations and song_uuid not in errored_separations:
-        return False
+    logger.debug(f"Cleaning up {song_uuid}.")
+
+    with get_db() as db:
+        status = db.execute(
+            "SELECT status FROM status WHERE song_uuid = ?", (song_uuid,)
+        )
+        status = status.fetchone()
+        if (
+            status is None
+            or cast(str, status[0]) == SplitStatus.NONE.name  # type: ignore
+            or cast(str, status[0]) == SplitStatus.PROCESSING.name  # type: ignore
+            or cast(str, status[0]) == SplitStatus.PENDING.name  # type: ignore
+        ):
+            return False
 
     path = FILE_DIRECTORY.joinpath(song_uuid)
     shutil.rmtree(path)
 
-    with status_lock:
-        if song_uuid in finished_separations:
-            finished_separations.remove(song_uuid)
-        elif song_uuid in errored_separations:
-            errored_separations.remove(song_uuid)
+    with get_db() as db:
+        db.execute("DELETE FROM queue WHERE song_uuid = ?", (song_uuid,))
+        db.execute("DELETE FROM status WHERE song_uuid = ?", (song_uuid,))
+        db.commit()
 
     return True
 
@@ -179,50 +232,110 @@ def cleanup_all() -> bool:
 
     :return: None
     """
+    for songfolder in FILE_DIRECTORY.iterdir():
+        shutil.rmtree(songfolder)
 
-    if to_separate.qsize() > 0:
-        return False
-
-    with status_lock:
-        for songfolder in FILE_DIRECTORY.iterdir():
-            shutil.rmtree(songfolder)
-
-    pending_separations.clear()
-    processing_separations.clear()
-    finished_separations.clear()
-    errored_separations.clear()
+    with get_db() as db:
+        db.execute("DELETE FROM queue")
+        db.execute("DELETE FROM status")
+        db.commit()
 
     return True
 
 
 def split_worker() -> None:
+    # Entrypoint for the backend worker. Make sure this is running only once.
+
+    # Debug information
+    logger.debug("Starting split worker.")
+    logger.debug(f"File directory: {FILE_DIRECTORY}")
+    logger.debug(f"Database path: {DB_PATH}")
+    logger.debug(f"GPU available: {th.cuda.is_available()}")
+    logger.debug(f"Available models: {demucs.api.list_models()}")
+
+    init_db()
+
     while True:
-        song_uuid = to_separate.get()
-        with status_lock:
-            pending_separations.remove(song_uuid)
-            processing_separations.append(song_uuid)
+        # Get a song to separate. If not available, sleep for 1 second and try again
+        with get_db() as db:
+            task = db.execute("SELECT * FROM queue LIMIT 1")
+            task = task.fetchone()
+
+        if task is None:
+            time.sleep(1)
+            continue
+
+        song_uuid = cast(str, task[0])  # type: ignore
+        model = cast(str, task[1])  # type: ignore
+        if model is None or model == "":
+            logger.info(
+                f"No model specified for {song_uuid}. Using default model {DEFAULT_MODEL}."
+            )
+            model = DEFAULT_MODEL
+        elif (
+            (
+                demucs.api.list_models().get("single") is None
+                or model not in demucs.api.list_models().get("single").keys()
+            )  # type: ignore
+            and (
+                demucs.api.list_models().get("bag") is None
+                or model not in demucs.api.list_models().get("bag").keys()
+            )  # type: ignore
+        ):
+            logger.warning(
+                f'Invalid model "{model}". Using default model {DEFAULT_MODEL}.'
+            )
+            model = DEFAULT_MODEL
+        elif model.endswith("_q"):
+            logger.warning(
+                f"Model {model} is quantized. Quantized models are not supported. Using default model {DEFAULT_MODEL}."
+            )
+            model = DEFAULT_MODEL
+
+        logger.info(f"Picked up task {song_uuid} with model {model}.")
+
+        with get_db() as db:
+            db.execute("DELETE FROM queue WHERE song_uuid = ?", (song_uuid,))
+            db.execute(
+                "UPDATE status SET status = ? WHERE song_uuid = ?",
+                (SplitStatus.PROCESSING.name, song_uuid),
+            )
+            db.commit()
+
         path = FILE_DIRECTORY.joinpath(song_uuid)
         input_file = path.joinpath("input.mp3")
 
-        args = SplitArgs(input_file=input_file, output_dir=path)
+        args = SplitArgs(input_file=input_file, output_dir=path, model=model)
+
+        timebefore = time.time()
 
         try:
             separate_audio(args)
-            with status_lock:
-                processing_separations.remove(song_uuid)
-                finished_separations.append(song_uuid)
+            with get_db() as db:
+                db.execute(
+                    "UPDATE status SET status = ? WHERE song_uuid = ?",
+                    (SplitStatus.FINISHED.name, song_uuid),
+                )
+                db.commit()
+            logger.info(
+                f"Done. Separation took {time.time() - timebefore:.2f} seconds."
+            )
         except AssertionError as e:
-            with status_lock:
-                processing_separations.remove(song_uuid)
-                errored_separations.append(song_uuid)
+            with get_db() as db:
+                db.execute(
+                    "UPDATE status SET status = ? WHERE song_uuid = ?",
+                    (SplitStatus.ERROR.name, song_uuid),
+                )
+                db.commit()
             raise AudioSplitError(str(e), 500)
         except ArgsError as e:
-            with status_lock:
-                processing_separations.remove(song_uuid)
-                errored_separations.append(song_uuid)
+            with get_db() as db:
+                db.execute(
+                    "UPDATE status SET status = ? WHERE song_uuid = ?",
+                    (SplitStatus.ERROR.name, song_uuid),
+                )
+                db.commit()
             raise e
-        finally:
-            to_separate.task_done()
 
 
 def separate_audio(args: SplitArgs) -> None:
@@ -252,5 +365,6 @@ def separate_audio(args: SplitArgs) -> None:
         # Temporarily disable tqdm progress bars
         stack.enter_context(contextlib.suppress(Exception))
         if "tqdm" in sys.modules:
-            sys.modules["tqdm"].tqdm = lambda *args, **kwargs: args[0] if args else None
+            sys.modules["tqdm"].tqdm = lambda *args, **kwargs: args[0] if args else None  # type: ignore
+        logger.debug(f"Running `demucs {' '.join(demucs_args)}`.")
         demucs.separate.main(demucs_args)
