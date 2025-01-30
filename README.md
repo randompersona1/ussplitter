@@ -13,26 +13,26 @@ You need both to run this addon.
 
 ## Motivation
 
-Stem separation is resource-intensive. USSplitter allows a powerful server, ideally cuda-accelerated, to split the files while usdb_syncer is run on a light machine. Of course, it possible to just run the server on the same machine if you wish.
+Stem separation is resource-intensive. USSplitter allows a powerful server, ideally cuda-accelerated, to split the files while usdb_syncer is run on a light machine. Of course, it is possible to just run the server on the same machine if you wish.
 
 Additionally, the approach is modular. For example, it would be very easy to write a script that runs through an entire song library, splitting everything. USSplitter provides a simple interface, manages resources, and can be expanded at will. 
 
 ## Current problems
 
 - cannot change existing `#VOCALS` or `INSTRUMENTAL` tags. 
-- uses internal methods of usdb_syncer. This could break the addon in future releases
+- uses internal methods of usdb_syncer. This could break the addon in future releases of usdb_syncer
 - since there are no standards for addons, for example regarding their configuration, I have simply created some. These aren't great, so they will almost certainly change. 
 
 ## Install
 
 > [!CAUTION]
-> This is untested on macos. If you have a mac and can confirm, this will run, please leave a comment.
+> This is untested on macos. If you have a mac and can confirm the addon works, please leave a comment.
 
 > [!WARNING]
 > You should be somewhat technically inclined to use the addon. There are probably certainly bugs. Please make sure you backup your songs.
 
 > [!WARNING]
-> Best results are achieved with a nvidia gpu. If you don't have one, you should probably only use the `htdemucs` model. On my Ryzen 5900x, separating with `htdemucs` takes ~ seconds
+> Best results are achieved with a nvidia gpu. If you don't have one, you should only use the `htdemucs` model. On my Ryzen 5900x, separating with `htdemucs` takes ~70 seconds.
 
 > [!WARNING]
 > Stem separation uses quite a lot of ram. I don't recommend using the addon with less than 16GB of system memory.
@@ -74,7 +74,7 @@ Create the `addon_config` directory and a `ussplitter.txt` inside it (or copy it
 | Option name | Value | Required | Default |
 | ----------- | ----- | -------- | ------- |
 | SERVER_URI  | base uri of the server you want to connect to, e.g. http://localhost:5000 | yes |  |
-| DEMUCS_MODEL | the model you want to use. See [demucs](https://github.com/adefossez/demucs) for the list of models. Note that quantised models currently do not work | no | htdemucs
+| DEMUCS_MODEL | the model you want to use. See [demucs](https://github.com/adefossez/demucs) for the list of models. I recommend `htdemucs`. Use `htdemucs_ft` if you have a cuda GPU and want a tiny bit of extra clarity. Note that quantised models (ending in `_q`) currently do not work | no | htdemucs
 
 
 ## Manual usage
