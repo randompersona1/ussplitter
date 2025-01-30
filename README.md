@@ -83,13 +83,15 @@ If you don't want to use docker, you will need [`uv`](https://docs.astral.sh/uv/
 
 To start the server, run:
 
-`uv run --only-group torch waitress --listen 0.0.0.0:5000 ussplitter.server:app`
+`uv run --no-dev --group torch waitress --listen 0.0.0.0:5000 ussplitter.server:app`
 
 
 ## Development
 
-You need [`uv`](https://docs.astral.sh/uv/).
+You need [`uv`](https://docs.astral.sh/uv/) to manage the project.
 
-Run `uv sync` to install dependancies. If for some reason you want to install torch, add `--group=torch`.
+You need a C compiler (like gcc) for `usdb_syncer`.
+
+Run `uv sync` to install dependancies. If for some reason you want to install demucs and torch, add `--group=torch`. This is not default because torch is a large dependancy and not required for the addon. If you intend to modify the backend, you might want to install them.
 
 Once the dependancies have been installed, use `ruff check` and `ruff format --diff` to lint. You should also use `isort --diff` to check your imports.

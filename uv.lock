@@ -1524,7 +1524,6 @@ name = "ussplitter"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "demucs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "flask", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "numpy", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "platformdirs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
@@ -1547,6 +1546,7 @@ dev = [
     { name = "usdb-syncer", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
 ]
 torch = [
+    { name = "demucs", marker = "(implementation_name != 'cpython' and platform_machine != 'aarch64') or os_name != 'nt' or platform_machine == 'aarch64' or sys_platform != 'linux'" },
     { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(implementation_name != 'cpython' and os_name == 'nt' and sys_platform == 'linux') or (os_name == 'nt' and platform_machine == 'aarch64' and sys_platform == 'linux') or (os_name != 'nt' and sys_platform != 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
     { name = "torchaudio", version = "2.1.2", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
@@ -1556,7 +1556,6 @@ torch = [
 
 [package.metadata]
 requires-dist = [
-    { name = "demucs", git = "https://github.com/adefossez/demucs?rev=b9ab48cad45976ba42b2ff17b229c071f0df9390" },
     { name = "flask", specifier = ">=3.1.0" },
     { name = "numpy", specifier = "~=1.24.1" },
     { name = "platformdirs", specifier = ">=4.3.6" },
@@ -1579,6 +1578,7 @@ dev = [
     { name = "usdb-syncer", git = "https://github.com/randompersona1/usdb_syncer?branch=python3.11" },
 ]
 torch = [
+    { name = "demucs", git = "https://github.com/adefossez/demucs?rev=b9ab48cad45976ba42b2ff17b229c071f0df9390" },
     { name = "torch", marker = "sys_platform != 'darwin'", specifier = ">=2.1.2", index = "https://download.pytorch.org/whl/cu121" },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.1.2" },
     { name = "torchaudio", marker = "sys_platform != 'darwin'", specifier = "<2.2.0", index = "https://download.pytorch.org/whl/cu121" },
