@@ -55,6 +55,8 @@ class ServerConfig:
 
     base_uri: str
     demucs_model: Optional[str] = None
+
+
 SERVER_CONFIG: ServerConfig
 
 
