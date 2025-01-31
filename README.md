@@ -53,7 +53,7 @@ clone this repository with
 ### Building the server
 
 > [!NOTE]
-> This can take a couple of minutes
+> This can take a couple of minutes. The resulting image is ~7GB big.
 
 `docker build -t ussplitter`
 
