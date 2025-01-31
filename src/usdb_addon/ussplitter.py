@@ -32,24 +32,38 @@ The server is expected to have the following endpoints:
 """
 
 import logging
+import os
 import time
+from dataclasses import dataclass
+from functools import wraps
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 
 import appdirs
 import requests
 import usdb_syncer.logger as usdb_logger
-from usdb_syncer import hooks, usdb_song
+from usdb_syncer import hooks, song_txt, usdb_song
 
-# This is somewhat hacky, but usdb_syncer doesn't expose a config directory
-CONFIG_DIR = Path(
-    appdirs.user_data_dir(appname="usdb_syncer", appauthor="bohning", roaming=False)
-).joinpath("addon_config")
-CONFIGS: dict[str, str] = {}
+NOTE_LINE_PREFIXES = frozenset([":", "*", "-", "R", "G", "F", "P1", "P2"])
 NECCESARY_CONFIG_KEYS = ["SERVER_URI"]
 
-logger = usdb_logger.logger
+
+@dataclass
+class ServerConfig:
+    """Configuration for the server."""
+
+    base_uri: str
+    demucs_model: Optional[str] = None
+
+
+SERVER_CONFIG: ServerConfig
+
+
+class DownloadError(Exception):
+    """Error raised when a download fails."""
+
+    pass
 
 
 class AddonLogger(logging.LoggerAdapter):
@@ -63,116 +77,130 @@ class AddonLogger(logging.LoggerAdapter):
         return f"[{self.addon_name}]: {msg}", kwargs
 
 
+def load_config(config_file: Path, log: AddonLogger) -> ServerConfig:
+    """
+    Load the server configuration from a file
+    """
+    if not config_file.exists():
+        log.error(f"Config file {config_file} not found.")
+        raise FileNotFoundError(f"Config file {config_file} not found.")
+
+    config_data = {}
+    for line in config_file.read_text().splitlines():
+        if "=" in line:
+            key, value = line.split("=")
+            config_data[key.strip().upper()] = value.strip()
+
+    # Check if all required keys are present
+    for key in NECCESARY_CONFIG_KEYS:
+        if key not in config_data:
+            log.error(f"Key {key} not found in config file.")
+            raise KeyError(f"Key {key} not found in config file.")
+
+    return ServerConfig(
+        base_uri=config_data["SERVER_URI"],
+        demucs_model=config_data.get("DEMUCS_MODEL", None),
+    )
+
+
 def initialize_addon() -> None:
     """
     Initialize the addon by loading configs and subscribing to events
     """
-    addon_logger = AddonLogger("ussplitter", logger)
-
+    addon_logger = AddonLogger("ussplitter", usdb_logger.logger)
     addon_logger.debug("Initializing ussplitter addon.")
+
+    CONFIG_DIR = Path(
+        appdirs.user_data_dir("usdb_syncer", "bohning", roaming=False)
+    ).joinpath("addon_config")
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     addon_logger.debug(f'Using config directory "{CONFIG_DIR}".')
 
     config_file = CONFIG_DIR.joinpath("ussplitter.txt")
-    if not config_file.exists():
-        addon_logger.error(
-            f'Config file not found. Please create a config file at "{config_file}".'
-        )
+
+    try:
+        global SERVER_CONFIG
+        SERVER_CONFIG = load_config(config_file, addon_logger)
+        addon_logger.debug("Loaded config file.")
+    except (FileNotFoundError, KeyError):
+        addon_logger.error("Failed to load config file. Addon will now exit.")
         return
-
-    with open(config_file, "r") as f:
-        configs_list = f.readlines()
-
-    for config in configs_list:
-        key, value = config.split("=")
-        CONFIGS[key.strip()] = value.strip()
-
-    addon_logger.debug(f"Loaded config successfully: {CONFIGS}")
-
-    for key in NECCESARY_CONFIG_KEYS:
-        if key not in CONFIGS:
-            addon_logger.error(
-                f"{key} not found in config file, but it is required. Addon will now exit."
-            )
-            return
-    addon_logger.debug("All required config keys found.")
 
     hooks.SongLoaderDidFinish.subscribe(on_download_finished)
     addon_logger.debug('Subscribed to "SongLoaderDidFinish" event.')
 
 
 def write_song_tags(
-    song_txt: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Log
+    txt_path: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Log
 ) -> bool:
     """
     Write the #VOCALS and #INSTRUMENTAL tags to the song file
     """
+    songlogger.debug(f"Reading {txt_path} to add tags.")
 
-    song: list[str] = []
-    tags_added = False
+    try:
+        song = song_txt.SongTxt.parse(txt_path.read_text(encoding="utf-8"), songlogger)
+    except Exception as e:
+        songlogger.error(f"Failed to parse song file: {e}")
+        return False
+    songlogger.debug("Parsed song file.")
 
-    note_lines = [
-        ":",
-        "*",
-        "-",
-        "R",
-        "G",
-        "F",
-        "P1",
-        "P2",
-    ]  # Lines that start with these strings are not attributes.
+    song.headers.vocals = vocals
+    song.headers.instrumental = instrumental
 
-    songlogger.debug(f"Reading {song_txt} to add tags.")
-    with open(song_txt, "r", encoding="utf-8") as f:
-        for line in f.readlines():
-            if not tags_added and not any(line.startswith(note) for note in note_lines):
-                # We've reached the lyrics. Now insert the #VOCALS and #INSTRUMENTAL tags above
-                song.append(f"#VOCALS:{vocals}\n")
-                song.append(f"#INSTRUMENTAL:{instrumental}\n")
-                tags_added = True
-            song.append(line)
+    try:
+        song.write_to_file(path=txt_path, encoding="utf-8", newline=os.linesep)
+    except Exception as e:
+        songlogger.error(f"Failed to write tags to song file: {e}")
+        return False
+    songlogger.debug("Wrote tags to song file.")
 
-    if tags_added:
-        songlogger.debug(f"Writing tags to {song_txt}.")
-        with open(song_txt, "w", encoding="utf-8") as f:
-            f.writelines(song)
-    else:
-        songlogger.error(f"Failed to add tags to {song_txt}.")
-
-    return tags_added
+    return True
 
 
+def retry_operation(retries: int, delay: int):
+    """
+    Decorator for retrying an operation if it fails with delays.
+    """
+
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            attempts = retries
+            while attempts > 0:
+                try:
+                    return func(*args, **kwargs)
+                except Exception:
+                    attempts -= 1
+                    if attempts == 0:
+                        raise DownloadError()
+                    time.sleep(delay)
+            return None
+
+        return wrapper
+
+    return decorator
+
+
+@retry_operation(retries=3, delay=5)
 def download_file_from_server(
     base_url: str,
     endpoint: str,
     params: dict,
     destination: Path,
     logger: usdb_logger.Log,
-) -> bool:
+) -> None:
     """
     Download a file from a server
     """
-    response = requests.get(urljoin(base_url, endpoint), params=params)
-
-    try:
+    with requests.get(
+        urljoin(base_url, endpoint), params=params, stream=True
+    ) as response:
         response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        logger.debug(e)
-        logger.error(f"Failed to download {endpoint}.")
-        return False
-
-    try:
-        with open(destination, "wb") as f:
-            f.write(response.content)
-    except Exception as e:
-        logger.debug(e)
-        logger.error(
-            f"Failed to write {endpoint} to disk. This is probably because of an incorrect path."
+        logger.debug(
+            f"Got response {response.status_code} from server downloading {endpoint}."
         )
-        return False
-
-    logger.debug(f"Downloaded {endpoint} to {destination}.")
-    return True
+        destination.write_bytes(response.content)
 
 
 def on_download_finished(song: usdb_song.UsdbSong) -> None:
@@ -195,13 +223,13 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     song_mp3 = song_folder.joinpath(song.sync_meta.audio.fname)
 
     # Get the model to use for splitting. If not provided, use None and let the server decide on the default.
-    model = CONFIGS.get("DEMUCS_MODEL", None)
+    model = SERVER_CONFIG.demucs_model
     song_logger.debug(f"Using model {model} for splitting.")
 
     # Send the file to the server
     try:
         response = requests.post(
-            urljoin(CONFIGS["SERVER_URI"], "/split"),
+            urljoin(SERVER_CONFIG.base_uri, "/split"),
             params={"model": model},
             files={"audio": open(song_mp3, "rb")},
             timeout=2,
@@ -240,7 +268,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
         time.sleep(5)
         try:
             response = requests.get(
-                urljoin(CONFIGS["SERVER_URI"], "/status"), params={"uuid": uuid}
+                urljoin(SERVER_CONFIG.base_uri, "/status"), params={"uuid": uuid}
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
@@ -276,50 +304,37 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     vocals_dest_path = song_folder.joinpath(f"{song_mp3.stem} [VOC].mp3")
     instrumental_dest_path = song_folder.joinpath(f"{song_mp3.stem} [INSTR].mp3")
 
-    vocals_downloaded = False
-    instrumental_downloaded = False
-    error_retry = 5
-    while not vocals_downloaded or not instrumental_downloaded:
-        if error_retry <= 0:
-            song_logger.error("Too many retries downloading mp3 files. Giving up.")
-            break
+    download_file_from_server(
+        base_url=SERVER_CONFIG.base_uri,
+        endpoint="/result/vocals",
+        params={"uuid": uuid},
+        destination=vocals_dest_path,
+        logger=song_logger,
+    )
 
-        if not vocals_downloaded:
-            song_logger.debug("Trying to download vocals.")
-            vocals_downloaded = download_file_from_server(
-                base_url=CONFIGS["SERVER_URI"],
-                endpoint="/result/vocals",
-                params={"uuid": uuid},
-                destination=vocals_dest_path,
-                logger=song_logger,
-            )
-            if not vocals_downloaded:
-                error_retry -= 1
-
-        if not instrumental_downloaded:
-            song_logger.debug("Trying to download instrumental.")
-            instrumental_downloaded = download_file_from_server(
-                base_url=CONFIGS["SERVER_URI"],
-                endpoint="/result/instrumental",
-                params={"uuid": uuid},
-                destination=instrumental_dest_path,
-                logger=song_logger,
-            )
-            if not instrumental_downloaded:
-                error_retry -= 1
-
-        time.sleep(5)
+    download_file_from_server(
+        base_url=SERVER_CONFIG.base_uri,
+        endpoint="/result/instrumental",
+        params={"uuid": uuid},
+        destination=instrumental_dest_path,
+        logger=song_logger,
+    )
 
     # Write the tags to the song file
     song_txt = song_folder.joinpath(song.sync_meta.txt.fname)
-    write_song_tags(
+    if write_song_tags(
         song_txt, vocals_dest_path.name, instrumental_dest_path.name, song_logger
-    )
+    ):
+        song_logger.info("Wrote tags to song file.")
+    else:
+        song_logger.error(
+            "Failed to write tags to song file. The audio files will not be linked."
+        )
 
     try:
         # Cleanup on server
         response = requests.post(
-            urljoin(CONFIGS["SERVER_URI"], "/cleanup"), params={"uuid": uuid}
+            urljoin(SERVER_CONFIG.base_uri, "/cleanup"), params={"uuid": uuid}
         )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
