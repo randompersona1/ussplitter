@@ -213,6 +213,7 @@ def cleanup(song_uuid: str) -> bool:
             or cast(str, status[0]) == SplitStatus.PROCESSING.name  # type: ignore
             or cast(str, status[0]) == SplitStatus.PENDING.name  # type: ignore
         ):
+            logger.debug(f"Song {song_uuid} is not finished. Not cleaning up.")
             return False
 
     path = FILE_DIRECTORY.joinpath(song_uuid)
@@ -232,6 +233,19 @@ def cleanup_all() -> bool:
 
     :return: None
     """
+    # Check if there are any songs with PROCESSING or PENDING status. If there are, return False
+    with get_db() as db:
+        status = db.execute("SELECT status FROM status")
+        songs = status.fetchall()
+        for song in songs:
+            if (
+                song[0] == SplitStatus.PROCESSING.name
+                or song[0] == SplitStatus.PENDING.name
+            ):
+                return False
+
+    # If there are no songs with PROCESSING or PENDING status, remove all files
+
     for songfolder in FILE_DIRECTORY.iterdir():
         shutil.rmtree(songfolder)
 
@@ -273,14 +287,11 @@ def split_worker() -> None:
             )
             model = DEFAULT_MODEL
         elif (
-            (
-                demucs.api.list_models().get("single") is None
-                or model not in demucs.api.list_models().get("single").keys()
-            )  # type: ignore
-            and (
-                demucs.api.list_models().get("bag") is None
-                or model not in demucs.api.list_models().get("bag").keys()
-            )  # type: ignore
+            demucs.api.list_models().get("single") is None
+            or model not in demucs.api.list_models().get("single").keys()  # type: ignore
+        ) and (
+            demucs.api.list_models().get("bag") is None
+            or model not in demucs.api.list_models().get("bag").keys()  # type: ignore
         ):
             logger.warning(
                 f'Invalid model "{model}". Using default model {DEFAULT_MODEL}.'
