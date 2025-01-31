@@ -1,15 +1,15 @@
 # Copyright (C) 2025 randompersona1
-# 
+#
 # USSplitter is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # USSplitter is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public License
 # along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
 
@@ -31,10 +31,11 @@ The server is expected to have the following endpoints:
 - POST /cleanupall: Cleans up all files on the server.
 """
 
+import logging
+import os
+import time
 from dataclasses import dataclass
 from functools import wraps
-import logging
-import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
@@ -42,20 +43,24 @@ from urllib.parse import urljoin
 import appdirs
 import requests
 import usdb_syncer.logger as usdb_logger
-from usdb_syncer import hooks, usdb_song
+from usdb_syncer import hooks, song_txt, usdb_song
 
 NOTE_LINE_PREFIXES = frozenset([":", "*", "-", "R", "G", "F", "P1", "P2"])
 NECCESARY_CONFIG_KEYS = ["SERVER_URI"]
 
+
 @dataclass
 class ServerConfig:
     """Configuration for the server."""
+
     base_uri: str
     demucs_model: Optional[str] = None
+SERVER_CONFIG: ServerConfig
 
 
 class DownloadError(Exception):
     """Error raised when a download fails."""
+
     pass
 
 
@@ -77,22 +82,22 @@ def load_config(config_file: Path, log: AddonLogger) -> ServerConfig:
     if not config_file.exists():
         log.error(f"Config file {config_file} not found.")
         raise FileNotFoundError(f"Config file {config_file} not found.")
-    
+
     config_data = {}
     for line in config_file.read_text().splitlines():
         if "=" in line:
             key, value = line.split("=")
             config_data[key.strip().upper()] = value.strip()
-    
+
     # Check if all required keys are present
     for key in NECCESARY_CONFIG_KEYS:
         if key not in config_data:
             log.error(f"Key {key} not found in config file.")
             raise KeyError(f"Key {key} not found in config file.")
-    
+
     return ServerConfig(
         base_uri=config_data["SERVER_URI"],
-        demucs_model=config_data.get("DEMUCS_MODEL", None)
+        demucs_model=config_data.get("DEMUCS_MODEL", None),
     )
 
 
@@ -103,8 +108,9 @@ def initialize_addon() -> None:
     addon_logger = AddonLogger("ussplitter", usdb_logger.logger)
     addon_logger.debug("Initializing ussplitter addon.")
 
-
-    CONFIG_DIR = Path(appdirs.user_data_dir("usdb_syncer", "bohning", roaming=False)).joinpath("addon_config")
+    CONFIG_DIR = Path(
+        appdirs.user_data_dir("usdb_syncer", "bohning", roaming=False)
+    ).joinpath("addon_config")
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     addon_logger.debug(f'Using config directory "{CONFIG_DIR}".')
 
@@ -123,44 +129,38 @@ def initialize_addon() -> None:
 
 
 def write_song_tags(
-    song_txt: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Log
+    txt_path: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Log
 ) -> bool:
     """
     Write the #VOCALS and #INSTRUMENTAL tags to the song file
     """
+    songlogger.debug(f"Reading {txt_path} to add tags.")
 
-    song: list[str] = []
-    tags_added = False
+    try:
+        song = song_txt.SongTxt.parse(txt_path.read_text(encoding="utf-8"), songlogger)
+    except Exception as e:
+        songlogger.error(f"Failed to parse song file: {e}")
+        return False
+    songlogger.debug("Parsed song file.")
 
+    song.headers.vocals = vocals
+    song.headers.instrumental = instrumental
 
-    songlogger.debug(f"Reading {song_txt} to add tags.")
-    file_content = song_txt.read_text(encoding="utf-8").splitlines()
+    try:
+        song.write_to_file(path=txt_path, encoding="utf-8", newline=os.linesep)
+    except Exception as e:
+        songlogger.error(f"Failed to write tags to song file: {e}")
+        return False
+    songlogger.debug("Wrote tags to song file.")
 
-    for line in file_content:
-        if not tags_added and not line.strip():
-            continue
-        if not tags_added and not any(line.startswith(note) for note in NOTE_LINE_PREFIXES):
-            # We've reached the lyrics. Now insert the #VOCALS and #INSTRUMENTAL tags above
-            song.extend([
-                f"#VOCALS:{vocals}",
-                f"#INSTRUMENTAL:{instrumental}",
-            ])
-            tags_added = True
-        song.append(line)
-
-    if tags_added:
-        songlogger.debug(f"Writing tags to {song_txt}.")
-        song_txt.write_text("\n".join(song) + "\n", encoding="utf-8")
-        return True
-
-    songlogger.error(f"Failed to add tags to {song_txt}.")
-    return False
+    return True
 
 
 def retry_operation(retries: int, delay: int):
     """
     Decorator for retrying an operation if it fails with delays.
     """
+
     def decorator(func: Callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -174,7 +174,9 @@ def retry_operation(retries: int, delay: int):
                         raise DownloadError()
                     time.sleep(delay)
             return None
+
         return wrapper
+
     return decorator
 
 
@@ -185,13 +187,17 @@ def download_file_from_server(
     params: dict,
     destination: Path,
     logger: usdb_logger.Log,
-) -> bool:
+) -> None:
     """
     Download a file from a server
     """
-    with requests.get(urljoin(base_url, endpoint), params=params, stream=True) as response:
+    with requests.get(
+        urljoin(base_url, endpoint), params=params, stream=True
+    ) as response:
         response.raise_for_status()
-        logger.debug(f"Got response {response.status_code} from server downloading {endpoint}.")
+        logger.debug(
+            f"Got response {response.status_code} from server downloading {endpoint}."
+        )
         destination.write_bytes(response.content)
 
 
@@ -314,9 +320,14 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
 
     # Write the tags to the song file
     song_txt = song_folder.joinpath(song.sync_meta.txt.fname)
-    write_song_tags(
+    if write_song_tags(
         song_txt, vocals_dest_path.name, instrumental_dest_path.name, song_logger
-    )
+    ):
+        song_logger.info("Wrote tags to song file.")
+    else:
+        song_logger.error(
+            "Failed to write tags to song file. The audio files will not be linked."
+        )
 
     try:
         # Cleanup on server
