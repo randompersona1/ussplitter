@@ -34,36 +34,62 @@ The server is expected to have the following endpoints:
 import logging
 import os
 import time
-from dataclasses import dataclass
-from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 from urllib.parse import urljoin
 
-import appdirs
 import requests
 import usdb_syncer.logger as usdb_logger
+from PySide6.QtWidgets import QDialog, QWidget, QApplication
 from usdb_syncer import hooks, song_txt, usdb_song
+from usdb_syncer.gui.mw import MainWindow
+
+from ussplitter.forms.Settings import Ui_Dialog
+from ussplitter.settings import get_settings, set_settings, DemucsModels
+from ussplitter.utils import catch_and_log_exception, retry_operation
+
 
 NOTE_LINE_PREFIXES = frozenset([":", "*", "-", "R", "G", "F", "P1", "P2"])
 NECCESARY_CONFIG_KEYS = ["SERVER_URI"]
 
 
-@dataclass
-class ServerConfig:
-    """Configuration for the server."""
+class SettingsDialog(Ui_Dialog, QDialog):
+    """Settings dialog for the addon."""
 
-    base_uri: str
-    demucs_model: Optional[str] = None
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent=parent)
+        self.setupUi(self)
+        self.setModal(True)
+        self.setWindowTitle("USSplitter Settings")
 
+        # populate the fields with the current settings
+        settings = get_settings()
+        self.lineEdit_server_uri.setText(settings.base_uri)
+        self.lineEdit_server_uri.setPlaceholderText("http://localhost:5000")
 
-SERVER_CONFIG: ServerConfig
-
-
-class DownloadError(Exception):
-    """Error raised when a download fails."""
-
-    pass
+        for model in DemucsModels:
+            self.comboBox_model.addItem(model.value)
+        self.comboBox_model.setCurrentText(settings.demucs_model.value)
+    
+    def accept(self) -> None:
+        """Save the settings when the dialog is closed."""
+        server_uri = self.lineEdit_server_uri.text().strip()
+        if not server_uri:
+            logging.error("Server URI is empty.")
+            self.lineEdit_server_uri.setFocus()
+            return
+        
+        settings = get_settings()
+        settings.base_uri = server_uri
+        demucs_model = self.comboBox_model.currentText().strip()
+        settings.demucs_model = DemucsModels(demucs_model)
+        set_settings(settings)
+        logging.info("Saved settings.")
+        super().accept()
+    
+    def reject(self) -> None:
+        """Close the dialog without saving."""
+        super().reject()
 
 
 class AddonLogger(logging.LoggerAdapter):
@@ -77,32 +103,17 @@ class AddonLogger(logging.LoggerAdapter):
         return f"[{self.addon_name}]: {msg}", kwargs
 
 
-def load_config(config_file: Path, log: AddonLogger) -> ServerConfig:
-    """
-    Load the server configuration from a file
-    """
-    if not config_file.exists():
-        log.error(f"Config file {config_file} not found.")
-        raise FileNotFoundError(f"Config file {config_file} not found.")
-
-    config_data = {}
-    for line in config_file.read_text().splitlines():
-        if "=" in line:
-            key, value = line.split("=")
-            config_data[key.strip().upper()] = value.strip()
-
-    # Check if all required keys are present
-    for key in NECCESARY_CONFIG_KEYS:
-        if key not in config_data:
-            log.error(f"Key {key} not found in config file.")
-            raise KeyError(f"Key {key} not found in config file.")
-
-    return ServerConfig(
-        base_uri=config_data["SERVER_URI"],
-        demucs_model=config_data.get("DEMUCS_MODEL", None),
-    )
+@catch_and_log_exception(usdb_logger.logger)
+def get_main_window() -> MainWindow:
+    """Get the main window of usdb_syncer."""
+    app = QApplication.instance()
+    for widget in app.topLevelWidgets():
+        if isinstance(widget, MainWindow):
+            return widget
+    raise RuntimeError("MainWindow not found.")
 
 
+@catch_and_log_exception(usdb_logger.logger)
 def initialize_addon() -> None:
     """
     Initialize the addon by loading configs and subscribing to events
@@ -110,26 +121,22 @@ def initialize_addon() -> None:
     addon_logger = AddonLogger("ussplitter", usdb_logger.logger)
     addon_logger.debug("Initializing ussplitter addon.")
 
-    CONFIG_DIR = Path(
-        appdirs.user_data_dir("usdb_syncer", "bohning", roaming=False)
-    ).joinpath("addon_config")
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    addon_logger.debug(f'Using config directory "{CONFIG_DIR}".')
-
-    config_file = CONFIG_DIR.joinpath("ussplitter.txt")
-
     try:
-        global SERVER_CONFIG
-        SERVER_CONFIG = load_config(config_file, addon_logger)
-        addon_logger.debug("Loaded config file.")
-    except (FileNotFoundError, KeyError):
-        addon_logger.error("Failed to load config file. Addon will now exit.")
+        main_window = get_main_window()
+    except RuntimeError:
+        addon_logger.error("Failed to get main window. Addon will now exit.")
         return
+    
+    # Add the settings dialog to the tools menu
+    about_dialog = SettingsDialog(main_window)
+    main_window.menu_tools.addSeparator()
+    main_window.menu_tools.addAction("USSplitter Settings", about_dialog.show)
 
     hooks.SongLoaderDidFinish.subscribe(on_download_finished)
     addon_logger.debug('Subscribed to "SongLoaderDidFinish" event.')
 
 
+@catch_and_log_exception(usdb_logger.logger)
 def write_song_tags(
     txt_path: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Log
 ) -> bool:
@@ -158,30 +165,7 @@ def write_song_tags(
     return True
 
 
-def retry_operation(retries: int, delay: int):
-    """
-    Decorator for retrying an operation if it fails with delays.
-    """
-
-    def decorator(func: Callable):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            attempts = retries
-            while attempts > 0:
-                try:
-                    return func(*args, **kwargs)
-                except Exception:
-                    attempts -= 1
-                    if attempts == 0:
-                        raise DownloadError()
-                    time.sleep(delay)
-            return None
-
-        return wrapper
-
-    return decorator
-
-
+@catch_and_log_exception(usdb_logger.logger)
 @retry_operation(retries=3, delay=5)
 def download_file_from_server(
     base_url: str,
@@ -203,11 +187,16 @@ def download_file_from_server(
         destination.write_bytes(response.content)
 
 
+@catch_and_log_exception(usdb_logger.logger)
 def on_download_finished(song: usdb_song.UsdbSong) -> None:
     # Create a custom logger for the song to match usdb_syncer's logging format
     # {date} {time} {level} {song_id} {message}
     song_logger = usdb_logger.song_logger(song.song_id)
     song_logger.debug(f"Addon {__name__} called.")
+
+    # Get the server settings
+    server_settings = get_settings()
+
 
     if not song.sync_meta:
         song_logger.error("Missing sync_meta. This should never happen.")
@@ -223,14 +212,14 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     song_mp3 = song_folder.joinpath(song.sync_meta.audio.fname)
 
     # Get the model to use for splitting. If not provided, use None and let the server decide on the default.
-    model = SERVER_CONFIG.demucs_model
-    song_logger.debug(f"Using model {model} for splitting.")
+    model = server_settings.demucs_model
+    song_logger.debug(f"Using model {model.value} for splitting.")
 
     # Send the file to the server
     try:
         response = requests.post(
-            urljoin(SERVER_CONFIG.base_uri, "/split"),
-            params={"model": model},
+            urljoin(server_settings.base_uri, "/split"),
+            params={"model": model.value},
             files={"audio": open(song_mp3, "rb")},
             timeout=2,
         )
@@ -268,7 +257,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
         time.sleep(5)
         try:
             response = requests.get(
-                urljoin(SERVER_CONFIG.base_uri, "/status"), params={"uuid": uuid}
+                urljoin(server_settings.base_uri, "/status"), params={"uuid": uuid}
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
@@ -305,7 +294,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     instrumental_dest_path = song_folder.joinpath(f"{song_mp3.stem} [INSTR].mp3")
 
     download_file_from_server(
-        base_url=SERVER_CONFIG.base_uri,
+        base_url=server_settings.base_uri,
         endpoint="/result/vocals",
         params={"uuid": uuid},
         destination=vocals_dest_path,
@@ -313,7 +302,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     )
 
     download_file_from_server(
-        base_url=SERVER_CONFIG.base_uri,
+        base_url=server_settings.base_uri,
         endpoint="/result/instrumental",
         params={"uuid": uuid},
         destination=instrumental_dest_path,
@@ -334,7 +323,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     try:
         # Cleanup on server
         response = requests.post(
-            urljoin(SERVER_CONFIG.base_uri, "/cleanup"), params={"uuid": uuid}
+            urljoin(server_settings.base_uri, "/cleanup"), params={"uuid": uuid}
         )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
@@ -343,6 +332,5 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
         return
 
     song_logger.info("Split finished.")
-
 
 initialize_addon()

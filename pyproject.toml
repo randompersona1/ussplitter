@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ussplitter", "src/usdb_addon"]
+packages = ["src/ussplitter", "src/ussplitter_server"]
 
 [build-system]
 requires = ["hatchling"]

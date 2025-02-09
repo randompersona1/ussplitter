@@ -2,7 +2,7 @@ import threading
 
 import flask
 
-import ussplitter.backend as backend
+import ussplitter_server.backend as backend
 
 app = flask.Flask(__name__)
 
