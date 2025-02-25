@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional
 from enum import Enum
-from PySide6.QtCore import QSettings
 
+from PySide6.QtCore import QSettings
 
 @dataclass
 class DefaultSettings:
@@ -29,7 +28,7 @@ class ServerSettings:
     """Configuration for the server."""
 
     base_uri: str
-    demucs_model: DemucsModels = None
+    demucs_model: DemucsModels
 
 
 def set_settings(server_settings: ServerSettings):
@@ -39,7 +38,7 @@ def set_settings(server_settings: ServerSettings):
     settings.setValue("demucs_model", server_settings.demucs_model.value)
 
 
-def get_settings() -> Optional[ServerSettings]:
+def get_settings() -> ServerSettings:
     """Get the server settings from the QSettings object."""
     settings = QSettings("randompersona1", "USSplitter")
     base_uri = settings.value("base_uri")
@@ -48,4 +47,4 @@ def get_settings() -> Optional[ServerSettings]:
         base_uri = DefaultSettings.BASE_URI
     if demucs_model is None:
         demucs_model = DefaultSettings.DEMUCS_MODEL
-    return ServerSettings(base_uri=base_uri, demucs_model=DemucsModels(demucs_model))
+    return ServerSettings(base_uri=base_uri, demucs_model=DemucsModels(demucs_model))  # type: ignore

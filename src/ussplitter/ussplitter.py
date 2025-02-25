@@ -16,11 +16,7 @@
 """
 This is an addon for usdb_syncer that splits the audio of a song into vocals and instrumental using a remote server. This allows weaker machines to offload the processing to a more powerful server.
 
-THIS ADDON IS EXPERIMENTAL. KEEP BACKUPS OF YOUR FILES. USE AT YOUR OWN RISK.
-
-Usage requires a config file. Since usdb_syncer currently does not allow this explicitly, we just use the data directory of usdb_syncer. On a windows machine, this would be `%LOCALAPPDATA%/usdb_syncer/addon_config/config.txt`.
-usdb_syncer does not allow us to have external dependancies, so the config file is a simple key=value file. The following keys are required:
-- SERVER_URI: The URI of the server to send the audio to. This should be the base URI, e.g. `http://localhost:5000`.
+KEEP BACKUPS OF YOUR SONG FILES. USE AT YOUR OWN RISK.
 
 The server is expected to have the following endpoints:
 - POST /split: Accepts a file named "audio" and returns a UUID. The server should start processing the file in the background.
@@ -40,56 +36,16 @@ from urllib.parse import urljoin
 
 import requests
 import usdb_syncer.logger as usdb_logger
-from PySide6.QtWidgets import QDialog, QWidget, QApplication
+from PySide6.QtWidgets import QApplication, QDialog, QWidget
 from usdb_syncer import hooks, song_txt, usdb_song
 from usdb_syncer.gui.mw import MainWindow
 
 from ussplitter.forms.Settings import Ui_Dialog
-from ussplitter.settings import get_settings, set_settings, DemucsModels
+from ussplitter.settings import DemucsModels, get_settings, set_settings
 from ussplitter.utils import catch_and_log_exception, retry_operation
-
 
 NOTE_LINE_PREFIXES = frozenset([":", "*", "-", "R", "G", "F", "P1", "P2"])
 NECCESARY_CONFIG_KEYS = ["SERVER_URI"]
-
-
-class SettingsDialog(Ui_Dialog, QDialog):
-    """Settings dialog for the addon."""
-
-    def __init__(self, parent: QWidget) -> None:
-        super().__init__(parent=parent)
-        self.setupUi(self)
-        self.setModal(True)
-        self.setWindowTitle("USSplitter Settings")
-
-        # populate the fields with the current settings
-        settings = get_settings()
-        self.lineEdit_server_uri.setText(settings.base_uri)
-        self.lineEdit_server_uri.setPlaceholderText("http://localhost:5000")
-
-        for model in DemucsModels:
-            self.comboBox_model.addItem(model.value)
-        self.comboBox_model.setCurrentText(settings.demucs_model.value)
-    
-    def accept(self) -> None:
-        """Save the settings when the dialog is closed."""
-        server_uri = self.lineEdit_server_uri.text().strip()
-        if not server_uri:
-            logging.error("Server URI is empty.")
-            self.lineEdit_server_uri.setFocus()
-            return
-        
-        settings = get_settings()
-        settings.base_uri = server_uri
-        demucs_model = self.comboBox_model.currentText().strip()
-        settings.demucs_model = DemucsModels(demucs_model)
-        set_settings(settings)
-        logging.info("Saved settings.")
-        super().accept()
-    
-    def reject(self) -> None:
-        """Close the dialog without saving."""
-        super().reject()
 
 
 class AddonLogger(logging.LoggerAdapter):
@@ -103,11 +59,52 @@ class AddonLogger(logging.LoggerAdapter):
         return f"[{self.addon_name}]: {msg}", kwargs
 
 
+class SettingsDialog(Ui_Dialog, QDialog):
+    """Settings dialog for the addon."""
+
+    def __init__(self, parent: QWidget, log: AddonLogger) -> None:
+        self.log = log
+        super().__init__(parent=parent)
+        self.setupUi(self)
+        self.setModal(True)
+        self.setWindowTitle("USSplitter Settings")
+
+        # populate the fields with the current settings
+        settings = get_settings()
+        self.lineEdit_server_uri.setText(settings.base_uri)
+        self.lineEdit_server_uri.setPlaceholderText("http://localhost:5000")
+
+        for model in DemucsModels:
+            self.comboBox_model.addItem(model.value)
+        self.comboBox_model.setCurrentText(settings.demucs_model.value)
+
+    def accept(self) -> None:
+        """Save the settings when the dialog is closed."""
+        server_uri = self.lineEdit_server_uri.text().strip()
+        if not server_uri:
+            logging.error("Server URI is empty.")
+            self.lineEdit_server_uri.setFocus()
+            return
+
+        settings = get_settings()
+        settings.base_uri = server_uri
+        demucs_model = self.comboBox_model.currentText().strip()
+        settings.demucs_model = DemucsModels(demucs_model)
+        set_settings(settings)
+        self.log.debug("Saved settings.")
+        super().accept()
+
+    def reject(self) -> None:
+        """Close the dialog without saving."""
+        self.log.debug("Settings dialog closed.")
+        super().reject()
+
+
 @catch_and_log_exception(usdb_logger.logger)
 def get_main_window() -> MainWindow:
     """Get the main window of usdb_syncer."""
     app = QApplication.instance()
-    for widget in app.topLevelWidgets():
+    for widget in app.topLevelWidgets():  # type: ignore
         if isinstance(widget, MainWindow):
             return widget
     raise RuntimeError("MainWindow not found.")
@@ -126,9 +123,9 @@ def initialize_addon() -> None:
     except RuntimeError:
         addon_logger.error("Failed to get main window. Addon will now exit.")
         return
-    
+
     # Add the settings dialog to the tools menu
-    about_dialog = SettingsDialog(main_window)
+    about_dialog = SettingsDialog(main_window, addon_logger)
     main_window.menu_tools.addSeparator()
     main_window.menu_tools.addAction("USSplitter Settings", about_dialog.show)
 
@@ -160,8 +157,6 @@ def write_song_tags(
     except Exception as e:
         songlogger.error(f"Failed to write tags to song file: {e}")
         return False
-    songlogger.debug("Wrote tags to song file.")
-
     return True
 
 
@@ -196,7 +191,6 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
 
     # Get the server settings
     server_settings = get_settings()
-
 
     if not song.sync_meta:
         song_logger.error("Missing sync_meta. This should never happen.")
@@ -314,7 +308,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
     if write_song_tags(
         song_txt, vocals_dest_path.name, instrumental_dest_path.name, song_logger
     ):
-        song_logger.info("Wrote tags to song file.")
+        song_logger.debug("Wrote tags to song file.")
     else:
         song_logger.error(
             "Failed to write tags to song file. The audio files will not be linked."
@@ -332,5 +326,6 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:
         return
 
     song_logger.info("Split finished.")
+
 
 initialize_addon()

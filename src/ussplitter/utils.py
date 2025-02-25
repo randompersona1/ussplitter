@@ -1,11 +1,12 @@
 import logging
+import time
 from functools import wraps
 from typing import Callable
-import time
 
 
 class DownloadError(Exception):
     """Error raised when a download fails."""
+
     def __init__(self):
         super().__init__("Download failed.")
 
@@ -17,9 +18,14 @@ def catch_and_log_exception(logger: logging.Logger) -> Callable:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger.error(f"An error occurred in {func.__name__}: {e}")
+                logger.error(
+                    f"An unexpected error in the USSplitter addon occurred in {func.__name__}: {e}"
+                )
+
         return wrapper
+
     return decorator
+
 
 def retry_operation(retries: int, delay: int):
     """
@@ -33,11 +39,13 @@ def retry_operation(retries: int, delay: int):
             while attempts > 0:
                 try:
                     return func(*args, **kwargs)
-                except Exception:
+                except Exception as e:
                     attempts -= 1
                     if attempts == 0:
-                        raise DownloadError()
+                        raise DownloadError() from e
                     time.sleep(delay)
             return None
+
         return wrapper
+
     return decorator
