@@ -17,5 +17,10 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+      - name: Install system dependencies for dbus-python
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc python3-dev libdbus-1-dev libglib2.0-dev
+          pkg-config --cflags --libs dbus-1
       - name: Run mypy
         run: uv run mypy src
