@@ -1,30 +1,22 @@
-import logging
 import time
 from functools import wraps
-from typing import Callable
+from typing import Callable, cast
+
+from PySide6.QtWidgets import QApplication
+from usdb_syncer.gui.mw import MainWindow
 
 
-class DownloadError(Exception):
-    """Error raised when a download fails."""
-
-    def __init__(self):
-        super().__init__("Download failed.")
-
-
-def catch_and_log_exception(logger: logging.Logger) -> Callable:
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                logger.error(
-                    f"An unexpected error in the USSplitter addon occurred in {func.__name__}: {e}"
-                )
-
-        return wrapper
-
-    return decorator
+def get_main_window() -> MainWindow:
+    """
+    Get the main window of the application.
+    """
+    app = QApplication.instance()
+    if app is None:
+        raise RuntimeError("No application instance found.")
+    for widget in cast(QApplication, app).topLevelWidgets():
+        if isinstance(widget, MainWindow):
+            return widget
+    raise RuntimeError("No main window found.")
 
 
 def retry_operation(retries: int, delay: int):
@@ -42,7 +34,7 @@ def retry_operation(retries: int, delay: int):
                 except Exception as e:
                     attempts -= 1
                     if attempts == 0:
-                        raise DownloadError() from e
+                        raise RuntimeError() from e
                     time.sleep(delay)
             return None
 

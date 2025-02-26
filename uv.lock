@@ -79,7 +79,7 @@ name = "brotlicffi"
 version = "1.1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi" },
+    { name = "cffi", marker = "implementation_name != 'cpython'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/95/9d/70caa61192f570fcf0352766331b735afa931b4c6bc9a348a0925cc13288/brotlicffi-1.1.0.0.tar.gz", hash = "sha256:b77827a689905143f87915310b93b273ab17888fd43ef350d4832c4a71083c13", size = 465192 }
 wheels = [
@@ -194,7 +194,7 @@ name = "cryptography"
 version = "44.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
+    { name = "cffi", marker = "(implementation_name != 'cpython' and platform_python_implementation != 'PyPy') or (os_name != 'nt' and platform_python_implementation != 'PyPy')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/91/4c/45dfa6829acffa344e3967d6006ee4ae8be57af746ae2eba1c431949b32c/cryptography-44.0.0.tar.gz", hash = "sha256:cd4e834f340b4293430701e772ec543b0fbe6c2dea510a5286fe0acabe153a02", size = 710657 }
 wheels = [
@@ -750,8 +750,8 @@ name = "secretstorage"
 version = "3.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography" },
-    { name = "jeepney" },
+    { name = "cryptography", marker = "implementation_name != 'cpython' or os_name != 'nt'" },
+    { name = "jeepney", marker = "implementation_name != 'cpython' or os_name != 'nt'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/53/a4/f48c9d79cb507ed1373477dbceaba7401fd8a23af63b837fa61f1dcd3691/SecretStorage-3.3.3.tar.gz", hash = "sha256:2403533ef369eca6d2ba81718576c5e0f564d5cca1b58f73a8b23e7d4eeebd77", size = 19739 }
 wheels = [
@@ -936,6 +936,9 @@ dependencies = [
 name = "ussplitter"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "usdb-syncer" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -948,10 +951,10 @@ dev = [
     { name = "types-setuptools" },
     { name = "types-tabulate" },
     { name = "types-tqdm" },
-    { name = "usdb-syncer" },
 ]
 
 [package.metadata]
+requires-dist = [{ name = "usdb-syncer", git = "https://github.com/bohning/usdb_syncer" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -964,7 +967,6 @@ dev = [
     { name = "types-setuptools", specifier = ">=75.8.0.20250110" },
     { name = "types-tabulate", specifier = ">=0.9.0.20241207" },
     { name = "types-tqdm", specifier = ">=4.67.0.20241221" },
-    { name = "usdb-syncer", git = "https://github.com/bohning/usdb_syncer" },
 ]
 
 [[package]]

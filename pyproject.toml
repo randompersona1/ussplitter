@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 license = "LGPL-3.0-or-later"
 requires-python = "~=3.12"
-dependencies = []
+dependencies = [
+    "usdb-syncer>=0.0.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ussplitter"]
@@ -17,14 +19,8 @@ build-backend = "hatchling.build"
 [tool.uv.sources]
 usdb-syncer = { git = "https://github.com/bohning/usdb_syncer" }
 
-[[tool.uv.index]]
-name = "pytorch-cu121"
-url = "https://download.pytorch.org/whl/cu121"
-explicit = true
-
 [dependency-groups]
 dev = [
-    "usdb-syncer",
     "ruff>=0.9.3",
     "mypy>=1.14.1",
     "pip>=25.0",
@@ -35,6 +31,42 @@ dev = [
     "types-tqdm>=4.67.0.20241221",
     "types-colorama>=0.4.15.20240311",
 ]
+
+[tool.ruff]
+# Assume Python 3.12
+target-version = "py312"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "forms",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "C"]
 
 [tool.mypy]
 mypy_path = "src"

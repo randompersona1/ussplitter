@@ -18,9 +18,9 @@ from PySide6.QtCore import (
     QPoint,
     QRect,
     QSize,
-    Qt,
     QTime,
     QUrl,
+    Qt,
 )
 from PySide6.QtGui import (
     QBrush,
@@ -46,10 +46,14 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QGraphicsView,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QSizePolicy,
+    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
@@ -59,46 +63,99 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName("Dialog")
-        Dialog.resize(369, 142)
+        Dialog.resize(382, 200)
         self.buttonBox = QDialogButtonBox(Dialog)
         self.buttonBox.setObjectName("buttonBox")
-        self.buttonBox.setGeometry(QRect(20, 100, 341, 32))
+        self.buttonBox.setGeometry(QRect(0, 160, 371, 32))
         self.buttonBox.setOrientation(Qt.Orientation.Horizontal)
         self.buttonBox.setStandardButtons(
             QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Ok
         )
-        self.verticalLayoutWidget = QWidget(Dialog)
+        self.SettingsGroupBox = QGroupBox(Dialog)
+        self.SettingsGroupBox.setObjectName("SettingsGroupBox")
+        self.SettingsGroupBox.setGeometry(QRect(0, 10, 371, 151))
+        self.SettingsGroupBox.setCheckable(True)
+        self.verticalLayoutWidget = QWidget(self.SettingsGroupBox)
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(9, 10, 351, 80))
+        self.verticalLayoutWidget.setGeometry(QRect(9, 19, 351, 126))
         self.verticalLayout = QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.label_server_uri = QLabel(self.verticalLayoutWidget)
-        self.label_server_uri.setObjectName("label_server_uri")
+        self.label_serverAddress = QLabel(self.verticalLayoutWidget)
+        self.label_serverAddress.setObjectName("label_serverAddress")
 
-        self.horizontalLayout.addWidget(self.label_server_uri)
+        self.horizontalLayout.addWidget(self.label_serverAddress)
 
-        self.lineEdit_server_uri = QLineEdit(self.verticalLayoutWidget)
-        self.lineEdit_server_uri.setObjectName("lineEdit_server_uri")
+        self.lineEdit_serverAddress = QLineEdit(self.verticalLayoutWidget)
+        self.lineEdit_serverAddress.setObjectName("lineEdit_serverAddress")
 
-        self.horizontalLayout.addWidget(self.lineEdit_server_uri)
+        self.horizontalLayout.addWidget(self.lineEdit_serverAddress)
 
         self.verticalLayout.addLayout(self.horizontalLayout)
 
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.horizontalSpacer = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+
+        self.graphicsView_connected = QGraphicsView(self.verticalLayoutWidget)
+        self.graphicsView_connected.setObjectName("graphicsView_connected")
+        self.graphicsView_connected.setMaximumSize(QSize(20, 20))
+
+        self.horizontalLayout_3.addWidget(self.graphicsView_connected)
+
+        self.pushButton_connect = QPushButton(self.verticalLayoutWidget)
+        self.pushButton_connect.setObjectName("pushButton_connect")
+
+        self.horizontalLayout_3.addWidget(self.pushButton_connect)
+
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
+
+        self.verticalSpacer = QSpacerItem(
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        )
+
+        self.verticalLayout.addItem(self.verticalSpacer)
+
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.label_model_select = QLabel(self.verticalLayoutWidget)
-        self.label_model_select.setObjectName("label_model_select")
+        self.label_modelSelect = QLabel(self.verticalLayoutWidget)
+        self.label_modelSelect.setObjectName("label_modelSelect")
+        sizePolicy = QSizePolicy(
+            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred
+        )
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.label_modelSelect.sizePolicy().hasHeightForWidth()
+        )
+        self.label_modelSelect.setSizePolicy(sizePolicy)
+        self.label_modelSelect.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        self.horizontalLayout_2.addWidget(self.label_model_select)
+        self.horizontalLayout_2.addWidget(self.label_modelSelect)
 
-        self.comboBox_model = QComboBox(self.verticalLayoutWidget)
-        self.comboBox_model.setObjectName("comboBox_model")
-        self.comboBox_model.setEditable(False)
+        self.comboBox_modelSelect = QComboBox(self.verticalLayoutWidget)
+        self.comboBox_modelSelect.setObjectName("comboBox_modelSelect")
+        sizePolicy1 = QSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed
+        )
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(
+            self.comboBox_modelSelect.sizePolicy().hasHeightForWidth()
+        )
+        self.comboBox_modelSelect.setSizePolicy(sizePolicy1)
 
-        self.horizontalLayout_2.addWidget(self.comboBox_model)
+        self.horizontalLayout_2.addWidget(self.comboBox_modelSelect)
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
@@ -112,10 +169,16 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", "Dialog", None))
-        self.label_server_uri.setText(
-            QCoreApplication.translate("Dialog", "Server URI", None)
+        self.SettingsGroupBox.setTitle(
+            QCoreApplication.translate("Dialog", "Enabled", None)
         )
-        self.label_model_select.setText(
+        self.label_serverAddress.setText(
+            QCoreApplication.translate("Dialog", "Server Address", None)
+        )
+        self.pushButton_connect.setText(
+            QCoreApplication.translate("Dialog", "Connect", None)
+        )
+        self.label_modelSelect.setText(
             QCoreApplication.translate("Dialog", "Model", None)
         )
 
