@@ -127,7 +127,9 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
 
     # Check if the files already exist. If they do, skip splitting.
     if vocals_dest_path.exists() and instrumental_dest_path.exists():
-        song_logger.debug("Vocals and instrumental files already exist. Writing tags.")
+        song_logger.info(
+            "Vocals and instrumental files already exist. Writing tags to file."
+        )
         if write_song_tags(
             song_folder.joinpath(song.sync_meta.txt.fname),
             vocals_dest_path.name,
@@ -137,7 +139,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
             song_logger.debug("Wrote tags to song file.")
         else:
             song_logger.error(
-                "Failed to write tags to song file. The audio files will not be linked."
+                "Failed to write tags. Vocals/Instrumental files will not be linked."
             )
         return
 
