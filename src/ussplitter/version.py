@@ -27,7 +27,9 @@ class SemanticVersion:
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, SemanticVersion):
-            return False
+            raise TypeError(
+                "Cannot compare 'SemanticVersion' with a non-'SemanticVersion' type"
+            )
         return (
             self.major == other.major
             and self.minor == other.minor
@@ -36,15 +38,14 @@ class SemanticVersion:
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, SemanticVersion):
-            return False
-        if self.major < other.major:
-            return True
-        elif self.major == other.major:
-            if self.minor < other.minor:
-                return True
-            elif self.minor == other.minor:
-                return self.patch < other.patch
-        return False
+            raise TypeError(
+                "Cannot compare 'SemanticVersion' with a non-'SemanticVersion' type"
+            )
+        return (self.major, self.minor, self.patch) < (
+            other.major,
+            other.minor,
+            other.patch,
+        )
 
     def parity(self, other: "SemanticVersion") -> bool:
         if not isinstance(other, SemanticVersion):
