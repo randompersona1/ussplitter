@@ -1,3 +1,18 @@
+# Copyright (C) 2025 randompersona1
+#
+# USSplitter is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# USSplitter is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
+
 from dataclasses import dataclass
 
 from PySide6.QtCore import QSettings
@@ -13,7 +28,7 @@ class ServerSettings:
     """Configuration for the server."""
 
     base_uri: str
-    demucs_model: str
+    demucs_model: str | None
 
     @staticmethod
     def from_dict(settings: dict[str, str]) -> "ServerSettings":
@@ -35,7 +50,7 @@ def get_settings() -> ServerSettings:
     settings = QSettings("randompersona1", "USSplitter")
     out: dict[str, str] = {}
     for key in settings.allKeys():
-        out[key] = settings.value(key, type=str)  # type: ignore
+        out[key] = settings.value(key)  # type: ignore
     return ServerSettings.from_dict(out)
 
 
@@ -52,6 +67,7 @@ class SettingsDialog(Ui_Dialog, QDialog):
         self.setupUi(self)
         self.load_settings()
         self.pushButton_connect.clicked.connect(self.connect_server)
+        self.set_models([])
 
     def load_settings(self) -> None:
         settings = get_settings()
@@ -85,3 +101,4 @@ class SettingsDialog(Ui_Dialog, QDialog):
                 else "default",
             )
         )
+        super().accept()

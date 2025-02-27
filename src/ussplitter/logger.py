@@ -1,3 +1,18 @@
+# Copyright (C) 2025 randompersona1
+#
+# USSplitter is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# USSplitter is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
+
 import logging
 from typing import Any
 
@@ -17,6 +32,9 @@ class AddonLogger(logging.LoggerAdapter):
 
 
 class AddonSongLogger(SongLogger):
+    """Logger wrapper for addon song logs. Logs are prefixed with the song ID and
+    addon name."""
+
     def __init__(
         self, addon_name: str, song_id: SongId, logger_: Any, extra: Any = ...
     ) -> None:
@@ -24,7 +42,7 @@ class AddonSongLogger(SongLogger):
         self.addon_name = addon_name.upper()
 
     def process(self, msg: str, kwargs: Any) -> Any:
-        return f"#[{self.song_id}] [{self.addon_name}]: {msg}", kwargs
+        return f"#{self.song_id} [{self.addon_name}]: {msg}", kwargs
 
     @classmethod
     def from_song_logger(

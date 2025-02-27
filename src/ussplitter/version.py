@@ -1,3 +1,18 @@
+# Copyright (C) 2025 randompersona1
+#
+# USSplitter is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# USSplitter is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Any
 
 
@@ -32,7 +47,13 @@ class SemanticVersion:
         return False
 
     def parity(self, other: "SemanticVersion") -> bool:
-        return self.major == other.major
+        if not isinstance(other, SemanticVersion):
+            return False
+        if self.major != other.major:
+            return False
+        if self.major == 0:
+            return self.minor == other.minor
+        return True
 
     @staticmethod
     def from_string(version: str) -> "SemanticVersion":
@@ -42,7 +63,3 @@ class SemanticVersion:
     @staticmethod
     def from_tuple(version: tuple) -> "SemanticVersion":
         return SemanticVersion(*version)
-
-
-class ProtocolVersion(SemanticVersion):
-    """Semantic versioning for protocol versions."""

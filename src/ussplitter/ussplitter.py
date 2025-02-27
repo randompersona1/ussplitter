@@ -14,7 +14,7 @@
 # along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
 
 """
-This is an addon for usdb_syncer that splits the audio of a song into vocals and
+USSplitter is an addon for usdb_syncer that splits the audio of a song into vocals and
 instrumental using a remote server. This allows weaker machines to offload the
 processing to a more powerful server.
 
@@ -27,11 +27,13 @@ from pathlib import Path
 
 import usdb_syncer.logger as usdb_logger
 from usdb_syncer import hooks, song_txt, usdb_song
+from usdb_syncer.constants import VERSION as USDB_SYNCER_VERSION
 
-from ussplitter import utils
+from ussplitter import consts, utils
 from ussplitter.logger import AddonLogger, AddonSongLogger
 from ussplitter.net import ServerConnection
 from ussplitter.settings import SettingsDialog, get_settings
+from ussplitter.version import SemanticVersion
 
 
 def initialize_addon() -> None:
@@ -39,18 +41,36 @@ def initialize_addon() -> None:
     Initialize the addon by loading configs and subscribing to events
     """
     addon_logger = AddonLogger("ussplitter", usdb_logger.logger)
-    addon_logger.debug("Initializing ussplitter addon.")
+    addon_logger.debug(f"Initializing USSplitter v{str(consts.USSPLITTER_VERSION)}.")
+
+    # Check for version compatibility
+    if USDB_SYNCER_VERSION == "dev":
+        addon_logger.debug(
+            "Detected dev version of usdb_syncer. Skipping version check."
+        )
+    else:
+        usdb_syncer_version = SemanticVersion.from_string(USDB_SYNCER_VERSION)
+        if usdb_syncer_version < consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION:
+            addon_logger.error(
+                f"USSplitter requires usdb_syncer"
+                f"v{consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION} or higher."
+            )
+            return
 
     try:
         main_window = utils.get_main_window()
     except RuntimeError:
-        addon_logger.error("Failed to get main window. Addon will now exit.")
+        addon_logger.error("Failed to get main window. Exiting.")
         return
 
     # Add the settings dialog to the tools menu
-    about_dialog = SettingsDialog(main_window, ServerConnection(""), addon_logger)
+    ussplitter_settings_dialog = SettingsDialog(
+        main_window, ServerConnection("", addon_logger), addon_logger
+    )
     main_window.menu_tools.addSeparator()
-    main_window.menu_tools.addAction("USSplitter Settings", about_dialog.show)
+    main_window.menu_tools.addAction(
+        "USSplitter Settings", ussplitter_settings_dialog.show
+    )
 
     hooks.SongLoaderDidFinish.subscribe(on_download_finished)
     addon_logger.debug('Subscribed to "SongLoaderDidFinish" event.')
@@ -102,18 +122,37 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
     song_folder: Path = song.sync_meta.path.parent
     song_mp3 = song_folder.joinpath(song.sync_meta.audio.fname)
 
+    vocals_dest_path = song_folder.joinpath(f"{song_mp3.stem} [VOC].mp3")
+    instrumental_dest_path = song_folder.joinpath(f"{song_mp3.stem} [INSTR].mp3")
+
+    # Check if the files already exist. If they do, skip splitting.
+    if vocals_dest_path.exists() and instrumental_dest_path.exists():
+        song_logger.debug("Vocals and instrumental files already exist. Writing tags.")
+        if write_song_tags(
+            song_folder.joinpath(song.sync_meta.txt.fname),
+            vocals_dest_path.name,
+            instrumental_dest_path.name,
+            song_logger,
+        ):
+            song_logger.debug("Wrote tags to song file.")
+        else:
+            song_logger.error(
+                "Failed to write tags to song file. The audio files will not be linked."
+            )
+        return
+
     # Get the model to use for splitting. If not provided, use None and let the server
     # decide on the default.
     model = server_settings.demucs_model
     song_logger.debug(f"Using model {model} for splitting.")
 
-    server_connection = ServerConnection(server_settings.base_uri)
+    server_connection = ServerConnection(server_settings.base_uri, song_logger)
     if not server_connection.connect():
         song_logger.error("Failed to connect to server. Skipping splitting.")
         return
 
     # Send the file to the server
-    if uuid := server_connection.put(song_mp3, model):
+    if uuid := server_connection.split(song_mp3, model):
         pass
     else:
         song_logger.error("Failed to send file to server for split.")
@@ -154,16 +193,11 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
             song_logger.error("Failed to get status from server.")
             error_retry -= 1
 
-    vocals_dest_path = song_folder.joinpath(f"{song_mp3.stem} [VOC].mp3")
-    instrumental_dest_path = song_folder.joinpath(f"{song_mp3.stem} [INSTR].mp3")
-
     # Download the vocals and instrumental files
-    server_connection.download_vocals(
-        params={"uuid": uuid}, destination=vocals_dest_path
-    )
+    server_connection.download_vocals(uuid=uuid, destination=vocals_dest_path)
 
     server_connection.download_instrumental(
-        params={"uuid": uuid}, destination=instrumental_dest_path
+        uuid=uuid, destination=instrumental_dest_path
     )
 
     # Write the tags to the song file
