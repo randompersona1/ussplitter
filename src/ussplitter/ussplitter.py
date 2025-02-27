@@ -109,14 +109,17 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
     # Get the server settings
     server_settings = get_settings()
 
+    missing = []
     if not song.sync_meta:
-        song_logger.error("Missing sync_meta. This should never happen.")
-        return
-    if not song.sync_meta.txt:
-        song_logger.error("Missing txt file. Skipping splitting.")
-        return
-    if not song.sync_meta.audio:
-        song_logger.error("Missing audio file. Skipping splitting.")
+        missing.append("sync_meta (this should never happen)")
+    else:
+        if not song.sync_meta.txt:
+            missing.append("txt file")
+        if not song.sync_meta.audio:
+            missing.append("audio file")
+
+    if missing:
+        song_logger.error("Missing " + ", ".join(missing) + ". Skipping splitting.")
         return
 
     song_folder: Path = song.sync_meta.path.parent
