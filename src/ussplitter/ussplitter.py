@@ -41,7 +41,7 @@ def initialize_addon() -> None:
     Initialize the addon by loading configs and subscribing to events
     """
     addon_logger = AddonLogger("ussplitter", usdb_logger.logger)
-    addon_logger.debug(f"Initializing USSplitter v{str(consts.USSPLITTER_VERSION)}.")
+    addon_logger.debug(f"Initializing USSplitter v{consts.USSPLITTER_VERSION!s}.")
 
     # Check for version compatibility
     if USDB_SYNCER_VERSION == "dev":
