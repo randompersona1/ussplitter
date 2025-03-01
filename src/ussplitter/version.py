@@ -55,6 +55,9 @@ class SemanticVersion:
             return self.minor == other.minor
         return True
 
+    def __repr__(self):
+        return f"SemanticVersion({self.major}, {self.minor}, {self.patch})"
+
     @staticmethod
     def from_string(version: str) -> "SemanticVersion":
         major, minor, patch = map(int, version.split("."))
