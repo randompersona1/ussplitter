@@ -53,7 +53,7 @@ def initialize_addon() -> None:
         if usdb_syncer_version < consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION:
             addon_logger.error(
                 f"USSplitter requires usdb_syncer"
-                f"v{str(consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION)} or higher."
+                f"v{consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION} or higher."
             )
             return
 
