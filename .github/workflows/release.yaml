@@ -16,12 +16,12 @@ jobs:
             - name: Install system dependencies for dbus-python
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y gcc python3-dev libdbus-1-dev libglib2.0-dev
+                  sudo apt-get install -y gcc libdbus-1-dev libglib2.0-dev
                   pkg-config --cflags --libs dbus-1
             - name: Generate pyside files
-              run: uv run scripts/pyside-uic.py
+              run: uv run ./scripts/pyside-uic.py
             - name: Run write_version
-              run: uv run scripts/write_version.py
+              run: uv run ./scripts/write_version.py
             - name: zip
               run: cd src && zip -r ussplitter.zip ussplitter
             - name: Create release
