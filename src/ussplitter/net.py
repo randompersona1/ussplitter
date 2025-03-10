@@ -123,8 +123,8 @@ class ServerConnection:
 
     def download_vocals(self, uuid: str, destination: Path) -> None:
         """
-        :param params: The parameters for the download request.
-        :param destination: The path to save the downloaded
+        :param uuid: The UUID of the split job to download.
+        :param destination: The path to save the downloaded vocals
             file to.
         """
         params = {"uuid": uuid}
@@ -133,8 +133,8 @@ class ServerConnection:
 
     def download_instrumental(self, uuid: str, destination: Path) -> None:
         """
-        :param params: The parameters for the download request.
-        :param destination: The path to save the downloaded
+        :param uuid: The UUID of the split job to download.
+        :param destination: The path to save the downloaded instrumental
             file to.
         """
         params = {"uuid": uuid}

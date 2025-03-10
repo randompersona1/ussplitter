@@ -177,4 +177,5 @@ cython_debug/
 .pypirc
 
 # USSplitter specific:
+src/ussplitter/forms/*.py
 _version.py
