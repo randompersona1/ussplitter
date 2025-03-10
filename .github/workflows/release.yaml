@@ -19,7 +19,7 @@ jobs:
                   sudo apt-get install -y gcc libdbus-1-dev libglib2.0-dev
                   pkg-config --cflags --libs dbus-1
             - name: Generate pyside files
-              run: uv run ./scripts/pyside-uic.py
+              run: uv run ./scripts/pyside_uic.py
             - name: Run write_version
               run: uv run ./scripts/write_version.py
             - name: zip
