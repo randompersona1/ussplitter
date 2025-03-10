@@ -109,18 +109,28 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
     # Get the server settings
     server_settings = get_settings()
 
-    missing = []
+    error = False
     if not song.sync_meta:
-        missing.append("sync_meta (this should never happen)")
+        song_logger.error(
+            "Song has no sync meta. This probably indicates that ussplitter doesn't "
+            "support the current syncer version."
+        )
+        error = True
     else:
         if not song.sync_meta.txt:
-            missing.append("txt file")
+            song_logger.error("Missing txt file. Skipping splitting.")
+            error = True
         if not song.sync_meta.audio:
-            missing.append("audio file")
+            song_logger.error("Missing audio file. Skipping splitting.")
+            error = True
 
-    if missing:
-        song_logger.error("Missing " + ", ".join(missing) + ". Skipping splitting.")
+    if error:
         return
+
+    # For mypy's benefit, we'll do some static checking here.
+    assert song.sync_meta is not None
+    assert song.sync_meta.txt is not None
+    assert song.sync_meta.audio is not None
 
     song_folder: Path = song.sync_meta.path.parent
     song_mp3 = song_folder.joinpath(song.sync_meta.audio.fname)

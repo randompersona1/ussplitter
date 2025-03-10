@@ -35,6 +35,7 @@ dev = [
 [tool.ruff]
 # Assume Python 3.12
 target-version = "py312"
+line-length = 88
 exclude = [
     ".bzr",
     ".direnv",
