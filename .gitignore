@@ -175,3 +175,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# USSplitter specific:
+src/ussplitter/forms/*.py
+_version.py

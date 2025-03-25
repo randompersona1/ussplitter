@@ -4,44 +4,23 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 license = "LGPL-3.0-or-later"
-requires-python = "~=3.11"
+requires-python = "~=3.12"
 dependencies = [
-    "flask>=3.1.0",
-    "numpy~=1.24.1",
-    "platformdirs>=4.3.6",
-    "waitress>=3.0.2",
+    "usdb-syncer>=0.0.0",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ussplitter", "src/usdb_addon"]
+packages = ["src/ussplitter"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-torch = [
-  { index = "pytorch-cu121", marker = "platform_system != 'Darwin'"},
-]
-torchvision = [
-  { index = "pytorch-cu121", marker = "platform_system != 'Darwin'"},
-]
-torchaudio = [
-  { index = "pytorch-cu121", marker = "platform_system != 'Darwin'"},
-]
-demucs = { git = "https://github.com/adefossez/demucs", rev = "b9ab48cad45976ba42b2ff17b229c071f0df9390" }
-usdb-syncer = { git = "https://github.com/randompersona1/usdb_syncer", branch = "python3.11" }
-# This branch, that I intend to maintain, changes the required python version for usdb_syncer to ^3.11. This allows usdb_syncer to be added as a dependency, removing errors and enabling type hints for the addon system.
-
-[[tool.uv.index]]
-name = "pytorch-cu121"
-url = "https://download.pytorch.org/whl/cu121"
-explicit = true
+usdb-syncer = { git = "https://github.com/bohning/usdb_syncer" }
 
 [dependency-groups]
 dev = [
-    "usdb-syncer",
-    "isort>=5.13.2",
     "ruff>=0.9.3",
     "mypy>=1.14.1",
     "pip>=25.0",
@@ -51,13 +30,48 @@ dev = [
     "types-tabulate>=0.9.0.20241207",
     "types-tqdm>=4.67.0.20241221",
     "types-colorama>=0.4.15.20240311",
-    "black>=24.10.0",
 ]
-torch = [
-    "demucs>=4.0.1",
-    "torch>=2.1.2",
-    "torchaudio<2.2.0",
+
+[tool.ruff]
+# Assume Python 3.12
+target-version = "py312"
+line-length = 88
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "forms",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "C", "PL", "N", "RUF"]
+
+[tool.ruff.lint.pylint]
+max-branches = 22
+max-statements = 70
 
 [tool.mypy]
 mypy_path = "src"
@@ -65,5 +79,5 @@ explicit_package_bases = true
 namespace_packages = true
 
 [[tool.mypy.overrides]]
-module = ["appdirs.*", "usdb_syncer.*"]
+module = ["ussplitter", "appdirs.*", "usdb_syncer.*"]
 follow_untyped_imports = true
