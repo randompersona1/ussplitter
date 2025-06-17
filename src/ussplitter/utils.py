@@ -15,23 +15,7 @@
 
 import time
 from functools import wraps
-from typing import Callable, cast
-
-from PySide6.QtWidgets import QApplication
-from usdb_syncer.gui.mw import MainWindow
-
-
-def get_main_window() -> MainWindow:
-    """
-    Get the main window of the application.
-    """
-    app = QApplication.instance()
-    if app is None:
-        raise RuntimeError("No application instance found.")
-    for widget in cast(QApplication, app).topLevelWidgets():
-        if isinstance(widget, MainWindow):
-            return widget
-    raise RuntimeError("No main window found.")
+from typing import Callable
 
 
 def retry_operation(retries: int, delay: int, exception: RuntimeError):

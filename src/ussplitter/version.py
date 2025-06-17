@@ -13,9 +13,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
 
+import functools
 from typing import Any
 
 
+@functools.total_ordering
 class SemanticVersion:
     def __init__(self, major: int, minor: int, patch: int):
         self.major = major
@@ -61,7 +63,7 @@ class SemanticVersion:
 
     @staticmethod
     def from_string(version: str) -> "SemanticVersion":
-        major, minor, patch = map(int, version.split("."))
+        major, minor, patch = map(int, version.lstrip("vV").split("."))
         return SemanticVersion(major, minor, patch)
 
     @staticmethod

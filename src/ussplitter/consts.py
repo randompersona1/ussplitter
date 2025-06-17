@@ -16,7 +16,7 @@
 from ussplitter.version import SemanticVersion
 
 USSPLITTER_PROTOCOL_VERSION = SemanticVersion(1, 0, 0)
-LEAST_COMPATIBLE_USDB_SYNCER_VERSION = SemanticVersion(0, 12, 0)
+LEAST_COMPATIBLE_USDB_SYNCER_VERSION = SemanticVersion(0, 14, 0)
 
 try:
     from ussplitter._version import __version__  # type: ignore

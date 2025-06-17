@@ -25,23 +25,29 @@ import os
 import time
 from pathlib import Path
 
+import usdb_syncer
+import usdb_syncer.gui.mw
 import usdb_syncer.logger as usdb_logger
 from usdb_syncer import hooks, song_txt, usdb_song
-from usdb_syncer.constants import VERSION as USDB_SYNCER_VERSION
+from usdb_syncer.gui import hooks as hooks_gui
 
-from ussplitter import consts, utils
+from ussplitter import consts
 from ussplitter.logger import AddonLogger, AddonSongLogger
 from ussplitter.net import ServerConnection
 from ussplitter.settings import SettingsDialog, get_settings
 from ussplitter.version import SemanticVersion
 
+USDB_SYNCER_VERSION = usdb_syncer.__version__
 
-def initialize_addon() -> None:
+NAME = "USSplitter"
+
+
+def initialize_addon(usdb_main_window: usdb_syncer.gui.mw.MainWindow) -> None:
     """
     Initialize the addon by loading configs and subscribing to events
     """
-    addon_logger = AddonLogger("ussplitter", usdb_logger.logger)
-    addon_logger.debug(f"Initializing USSplitter v{consts.USSPLITTER_VERSION!s}.")
+    addon_logger = AddonLogger(NAME, usdb_logger.logger)
+    addon_logger.debug(f"Initializing {NAME} v{consts.USSPLITTER_VERSION!s}.")
 
     # Check for version compatibility
     if USDB_SYNCER_VERSION == "dev":
@@ -52,24 +58,18 @@ def initialize_addon() -> None:
         usdb_syncer_version = SemanticVersion.from_string(USDB_SYNCER_VERSION)
         if usdb_syncer_version < consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION:
             addon_logger.error(
-                f"USSplitter requires usdb_syncer"
+                f"{NAME} requires usdb_syncer"
                 f"v{consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION} or higher."
             )
             return
 
-    try:
-        main_window = utils.get_main_window()
-    except RuntimeError:
-        addon_logger.error("Failed to get main window. Exiting.")
-        return
-
     # Add the settings dialog to the tools menu
     ussplitter_settings_dialog = SettingsDialog(
-        main_window, ServerConnection("", addon_logger), addon_logger
+        usdb_main_window, ServerConnection("", addon_logger), addon_logger
     )
-    main_window.menu_tools.addSeparator()
-    main_window.menu_tools.addAction(
-        "USSplitter Settings", ussplitter_settings_dialog.show
+    usdb_main_window.menu_tools.addSeparator()
+    usdb_main_window.menu_tools.addAction(
+        f"{NAME} Settings", ussplitter_settings_dialog.show
     )
 
     hooks.SongLoaderDidFinish.subscribe(on_download_finished)
@@ -77,7 +77,7 @@ def initialize_addon() -> None:
 
 
 def write_song_tags(
-    txt_path: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Log
+    txt_path: Path, vocals: str, instrumental: str, songlogger: usdb_logger.Logger
 ) -> bool:
     """
     Write the #VOCALS and #INSTRUMENTAL tags to the song file
@@ -103,8 +103,8 @@ def write_song_tags(
 
 
 def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
-    song_logger = AddonSongLogger("ussplitter", song.song_id, usdb_logger.logger)
-    song_logger.debug(f"Addon {__name__} called.")
+    song_logger = AddonSongLogger(NAME, song.song_id, usdb_logger.logger)
+    song_logger.debug(f"Addon {NAME} called.")
 
     # Get the server settings
     server_settings = get_settings()
@@ -167,46 +167,38 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
         return
 
     # Send the file to the server
-    if uuid := server_connection.split(song_mp3, model):
-        pass
-    else:
+    if not (uuid := server_connection.split(song_mp3, model)):
         song_logger.error("Failed to send file to server for split.")
         return
     song_logger.info(f"Sent file to server for split. Got uuid {uuid}.")
 
     # Splitting will take some time.
-    time.sleep(15)
+    time.sleep(10)
 
-    error_retry = 5
     while True:
-        if error_retry == 0:
-            song_logger.error("Too many retries. Giving up.")
         time.sleep(5)
 
         if status := server_connection.get_status(uuid):
             song_logger.debug(f"Got status: {status}")
 
-            if status == "NONE":
-                song_logger.error(
-                    "An internal error occured while splitting."
-                    "Server returned NONE status."
-                )
-                return
-            elif status == "FINISHED":
-                break
-            elif status == "PENDING":
-                pass
-            elif status == "PROCESSING":
-                pass
-            elif status == "ERROR":
-                song_logger.error(
-                    "An error occured while splitting. Server returned ERROR status."
-                )
-                server_connection.cleanup(uuid)
-                return
-        else:
-            song_logger.error("Failed to get status from server.")
-            error_retry -= 1
+            match status:
+                case "NONE":
+                    song_logger.error(
+                        "An internal error occured while splitting."
+                        "Server returned NONE status."
+                    )
+                    return
+                case "FINISHED":
+                    break
+                case "PENDING" | "PROCESSING":
+                    pass
+                case "ERROR":
+                    song_logger.error(
+                        "An error occured while splitting. Server returned ERROR"
+                        "status."
+                    )
+                    server_connection.cleanup(uuid)
+                    return
 
     # Download the vocals and instrumental files
     server_connection.download_vocals(uuid=uuid, destination=vocals_dest_path)
@@ -233,4 +225,4 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
     song_logger.info("Split finished.")
 
 
-initialize_addon()
+hooks_gui.MainWindowDidLoad.subscribe(initialize_addon)
