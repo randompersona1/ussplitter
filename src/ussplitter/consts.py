@@ -13,14 +13,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with USSplitter. If not, see <https://www.gnu.org/licenses/>.
 
-from ussplitter.version import SemanticVersion
+from packaging.version import Version
 
-USSPLITTER_PROTOCOL_VERSION = SemanticVersion(1, 0, 0)
-LEAST_COMPATIBLE_USDB_SYNCER_VERSION = SemanticVersion(0, 14, 0)
+USSPLITTER_PROTOCOL_VERSION = Version("1.0.0")
+LEAST_COMPATIBLE_USDB_SYNCER_VERSION = Version("0.18.0")
 
 try:
     from ussplitter._version import __version__  # type: ignore
 
-    USSPLITTER_VERSION = SemanticVersion.from_string(__version__)
+    USSPLITTER_VERSION = Version(__version__)
 except ImportError:
-    USSPLITTER_VERSION = SemanticVersion(0, 0, 0)
+    USSPLITTER_VERSION = Version("0.0.0-dev")

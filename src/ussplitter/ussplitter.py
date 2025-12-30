@@ -24,6 +24,7 @@ KEEP BACKUPS OF YOUR SONG FILES. USE AT YOUR OWN RISK.
 import os
 import time
 from pathlib import Path
+from packaging.version import Version
 
 import usdb_syncer
 import usdb_syncer.gui.mw
@@ -35,7 +36,6 @@ from ussplitter import consts
 from ussplitter.logger import AddonLogger, AddonSongLogger
 from ussplitter.net import ServerConnection
 from ussplitter.settings import SettingsDialog, get_settings
-from ussplitter.version import SemanticVersion
 
 USDB_SYNCER_VERSION = usdb_syncer.__version__
 
@@ -55,7 +55,7 @@ def initialize_addon(usdb_main_window: usdb_syncer.gui.mw.MainWindow) -> None:
             "Detected dev version of usdb_syncer. Skipping version check."
         )
     else:
-        usdb_syncer_version = SemanticVersion.from_string(USDB_SYNCER_VERSION)
+        usdb_syncer_version = Version(USDB_SYNCER_VERSION)
         if usdb_syncer_version < consts.LEAST_COMPATIBLE_USDB_SYNCER_VERSION:
             addon_logger.error(
                 f"{NAME} requires usdb_syncer"
@@ -132,11 +132,13 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
     assert song.sync_meta.txt is not None
     assert song.sync_meta.audio is not None
 
-    song_folder: Path = song.sync_meta.path.parent
-    song_mp3 = song_folder.joinpath(song.sync_meta.audio.fname)
+    song_audio = song.sync_meta.audio_path()
+    assert song_audio is not None
+    txt_path = song.sync_meta.txt_path()
+    assert txt_path is not None
 
-    vocals_dest_path = song_folder.joinpath(f"{song_mp3.stem} [VOC].mp3")
-    instrumental_dest_path = song_folder.joinpath(f"{song_mp3.stem} [INSTR].mp3")
+    vocals_dest_path = song_audio.parent.joinpath(f"{song_audio.stem} [VOC].mp3")
+    instrumental_dest_path = song_audio.parent.joinpath(f"{song_audio.stem} [INSTR].mp3")
 
     # Check if the files already exist. If they do, skip splitting.
     if vocals_dest_path.exists() and instrumental_dest_path.exists():
@@ -144,7 +146,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
             "Vocals and instrumental files already exist. Writing tags to file."
         )
         if write_song_tags(
-            song_folder.joinpath(song.sync_meta.txt.fname),
+            txt_path,
             vocals_dest_path.name,
             instrumental_dest_path.name,
             song_logger,
@@ -167,7 +169,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
         return
 
     # Send the file to the server
-    if not (uuid := server_connection.split(song_mp3, model)):
+    if not (uuid := server_connection.split(song_audio, model)):
         song_logger.error("Failed to send file to server for split.")
         return
     song_logger.info(f"Sent file to server for split. Got uuid {uuid}.")
@@ -194,8 +196,7 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
                     pass
                 case "ERROR":
                     song_logger.error(
-                        "An error occured while splitting. Server returned ERROR"
-                        "status."
+                        "An error occured while splitting. Server returned ERRORstatus."
                     )
                     server_connection.cleanup(uuid)
                     return
@@ -208,9 +209,8 @@ def on_download_finished(song: usdb_song.UsdbSong) -> None:  # noqa: C901
     )
 
     # Write the tags to the song file
-    song_txt = song_folder.joinpath(song.sync_meta.txt.fname)
     if write_song_tags(
-        song_txt, vocals_dest_path.name, instrumental_dest_path.name, song_logger
+        txt_path, vocals_dest_path.name, instrumental_dest_path.name, song_logger
     ):
         song_logger.debug("Wrote tags to song file.")
     else:
